@@ -1,1 +1,3 @@
 This is [my](https://sopanen.net) personal website which is made using free template
+
+From this website you can find information about myself, what I do and what I am currently working on. Also, there are my contacts available...
