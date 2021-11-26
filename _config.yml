@@ -1,4 +1,4 @@
-baseurl: ""
+baseurl: "/vonsopanen.github.io"
 permalink: pretty
 title: "Miro's Blog"
 collections_dir: collections
