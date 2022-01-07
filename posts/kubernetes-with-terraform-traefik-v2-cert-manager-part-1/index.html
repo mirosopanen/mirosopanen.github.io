@@ -8,19 +8,19 @@
 <meta name=keywords content=",kubernetes,terraform,server,cloud,dev-ops">
 <meta name=robots content="noodp">
 <meta name=theme-color content="#d58432">
-<link rel=canonical href=https://sopanen.net/posts/kubernetes-with-terraform-traefik-v2-cert-manager-part-1/>
+<link rel=canonical href=https://vonsopanen.github.io/posts/kubernetes-with-terraform-traefik-v2-cert-manager-part-1/>
 <title>
 Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1
 </title>
 <link href=https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.2.1/css/flag-icon.min.css rel=stylesheet type=text/css>
-<link rel=stylesheet href=https://sopanen.net/main.491d9de14a60a99da243398aa5873cb28a058c58cb30eb698c56e003d11d6aab.css>
+<link rel=stylesheet href=https://vonsopanen.github.io/main.491d9de14a60a99da243398aa5873cb28a058c58cb30eb698c56e003d11d6aab.css>
 <meta itemprop=name content="Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1">
 <meta itemprop=description content="Digital Ocean managed Kubernetes through Terraform. Paired with Traefik v2 as the Ingress Controller and cert-manager as the provider for free Let's Encrypts certificates!"><meta itemprop=datePublished content="2020-11-21T06:28:07+01:00">
 <meta itemprop=dateModified content="2020-11-21T06:28:07+01:00">
-<meta itemprop=wordCount content="2834"><meta itemprop=image content="https://sopanen.net/images/blog/6/header-image.png">
+<meta itemprop=wordCount content="2834"><meta itemprop=image content="https://vonsopanen.github.io/images/blog/6/header-image.png">
 <meta itemprop=keywords content="kubernetes,terraform,server,cloud,dev-ops,">
 <meta name=twitter:card content="summary_large_image">
-<meta name=twitter:image content="https://sopanen.net/images/blog/6/header-image.png">
+<meta name=twitter:image content="https://vonsopanen.github.io/images/blog/6/header-image.png">
 <meta name=twitter:title content="Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1">
 <meta name=twitter:description content="Digital Ocean managed Kubernetes through Terraform. Paired with Traefik v2 as the Ingress Controller and cert-manager as the provider for free Let's Encrypts certificates!">
 <meta property="article:published_time" content="2020-11-21 06:28:07 +0100 +0100">
@@ -29,7 +29,7 @@ Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1
 <div class=container>
 <header class=header>
 <span class=header__inner>
-<a href=https://sopanen.net/ style=text-decoration:none>
+<a href=https://vonsopanen.github.io/ style=text-decoration:none>
 <div class=logo>
 <span class=logo__mark>></span>
 <span class=logo__text>$ cd /home/</span>
@@ -39,7 +39,7 @@ Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1
 </a>
 <span class=header__right>
 <nav class=menu>
-<ul class=menu__inner><li><a href=https://sopanen.net/about/>About</a></li><li><a href=https://sopanen.net/posts/>Posts</a></li>
+<ul class=menu__inner><li><a href=https://vonsopanen.github.io/about/>About</a></li><li><a href=https://vonsopanen.github.io/posts/>Posts</a></li>
 </ul>
 </nav>
 <span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
@@ -58,7 +58,7 @@ Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1
 </div>
 <article>
 <h1 class=post-title>
-<a href=https://sopanen.net/posts/kubernetes-with-terraform-traefik-v2-cert-manager-part-1/>Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1</a>
+<a href=https://vonsopanen.github.io/posts/kubernetes-with-terraform-traefik-v2-cert-manager-part-1/>Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1</a>
 </h1>
 <div class=post-content>
 <h2 id=introduction->Introduction 📌</h2>
@@ -87,7 +87,7 @@ Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1
 </blockquote>
 <p>Before IaC, IT personnel would have to manually change configurations to manage their infrastructure. With IaC, your infrastructure’s configuration takes the form of a code file.</p>
 <p>Since it’s just text, it’s easy for you to edit, copy, and distribute it. You can <strong>and should</strong> put it under source control, like any other source code file.</p>
-<p><img src=https://sopanen.net/images/blog/6/infrastructure-as-code.png alt="Infastructure as Code"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/6/infrastructure-as-code.png alt="Infastructure as Code"></p>
 <p><a href=https://www.softobiz.com/infrastructure-as-code-an-essential-devops-practice/>Image source</a></p>
 <p>The benefits of Infrastructure as Code are:</p>
 <ul>
@@ -334,7 +334,7 @@ node_max_count                        <span style=color:#f92672>=</span> <span s
 <p>We can now officially deploy our cluster by applying our <code>terraform.tfplan</code> with the following command:</p>
 <pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ terraform apply &quot;terraform.tfplan&quot;
 </code></pre><p>This will take some minutes to finish. When logging in to Digital Ocean, you can see your cluster will now be up and running. AWESOME!</p>
-<p><img src=https://sopanen.net/images/blog/6/digital-ocean-kubernetes-cluster.png alt="Digital Ocean Kubernetes Cluster"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/6/digital-ocean-kubernetes-cluster.png alt="Digital Ocean Kubernetes Cluster"></p>
 <p><strong>NOTE:</strong></p>
 <p>The state is now stored locally in <code>terraform.tfstate</code>. When working with Terraform in a team, use of a local file makes Terraform usage complicated because each user must make sure they always have the latest state data before running Terraform and make sure that nobody else runs Terraform at the same time.</p>
 <p>In that case, it is better to store this state remote by using remote state. Terraform writes the state data to a remote data store, which can then be shared between all members of a team. So for best practices when working with production code and a team, use remote state. To keep this tutorial a little shorter I am using the default local <code>terraform.tfstate</code></p>
@@ -475,7 +475,7 @@ ingress_gateway_chart_version         <span style=color:#f92672>=</span> <span s
 <pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ terraform apply &quot;terraform.tfplan&quot;
 </code></pre><p>Hoorah, Traefik is deployed!! 🚀</p>
 <p>If you check your Digital Ocean dashboard right now and go to the Networking menu, and then the Load Balancers. You&rsquo;ll see a shiny fresh new load balancer there. I hear you thinking, huh? But we didn&rsquo;t deploy that?</p>
-<p><img src=https://sopanen.net/images/blog/6/digital-ocean-load-balancer.png alt="Digital Ocean Load Balancer"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/6/digital-ocean-load-balancer.png alt="Digital Ocean Load Balancer"></p>
 <p>This is the result of using the managed service by Digital Ocean. Whenever a Kubernetes service is declared as type LoadBalancer:</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Service</span>
 <span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>v1</span>
@@ -611,7 +611,7 @@ cert_manager_chart_version            <span style=color:#f92672>=</span> <span s
 <hr>
 <div class=post-info>
 <p>
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83.0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7" y2="7"/></svg><span class=tag><a href=https://sopanen.net/tags/kubernetes/>kubernetes</a></span><span class=tag><a href=https://sopanen.net/tags/terraform/>terraform</a></span><span class=tag><a href=https://sopanen.net/tags/server/>server</a></span><span class=tag><a href=https://sopanen.net/tags/cloud/>cloud</a></span><span class=tag><a href=https://sopanen.net/tags/dev-ops/>dev-ops</a></span>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83.0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7" y2="7"/></svg><span class=tag><a href=https://vonsopanen.github.io/tags/kubernetes/>kubernetes</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/terraform/>terraform</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/server/>server</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/cloud/>cloud</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/dev-ops/>dev-ops</a></span>
 </p>
 <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
 2834 Words
@@ -627,13 +627,13 @@ cert_manager_chart_version            <span style=color:#f92672>=</span> <span s
 </div>
 <div class=pagination__buttons>
 <span class="button previous">
-<a href=https://sopanen.net/posts/using-traefik-as-ingress-controller-on-a-kubernetes-cluster-with-cert-manager-part-2/>
+<a href=https://vonsopanen.github.io/posts/using-traefik-as-ingress-controller-on-a-kubernetes-cluster-with-cert-manager-part-2/>
 <span class=button__icon>←</span>
 <span class=button__text>Using Traefik as Ingress Controller on a Kubernetes cluster with cert-manager | Part 2</span>
 </a>
 </span>
 <span class="button next">
-<a href=https://sopanen.net/posts/ubuntu-20.04-basic-server-set-up-beginner-tutorial/>
+<a href=https://vonsopanen.github.io/posts/ubuntu-20.04-basic-server-set-up-beginner-tutorial/>
 <span class=button__text>Ubuntu 20.04 basic server set-up (beginner tutorial)</span>
 <span class=button__icon>→</span>
 </a>
@@ -652,12 +652,12 @@ cert_manager_chart_version            <span style=color:#f92672>=</span> <span s
 <div class=footer__inner>
 <div class=footer__content>
 <span>© 2020</span>
-<a href=https://sopanen.net/><span>Raf Rasenberg</span></a>
+<a href=https://vonsopanen.github.io/><span>Raf Rasenberg</span></a>
 </div>
 </div>
 </footer>
 </div>
-<script type=text/javascript src=https://sopanen.net/bundle.min.a0f363fdf81cdc5cfacc447a79c33189eb000d090336cd04aac8ee256f423b3133b836c281944c19c75e38d0b0b449f01ce5807e37798b7ac94ac1db51983fc4.js integrity="sha512-oPNj/fgc3Fz6zER6ecMxiesADQkDNs0EqsjuJW9COzEzuDbCgZRMGcdeONCwtEnwHOWAfjd5i3rJSsHbUZg/xA=="></script>
+<script type=text/javascript src=https://vonsopanen.github.io/bundle.min.a0f363fdf81cdc5cfacc447a79c33189eb000d090336cd04aac8ee256f423b3133b836c281944c19c75e38d0b0b449f01ce5807e37798b7ac94ac1db51983fc4.js integrity="sha512-oPNj/fgc3Fz6zER6ecMxiesADQkDNs0EqsjuJW9COzEzuDbCgZRMGcdeONCwtEnwHOWAfjd5i3rJSsHbUZg/xA=="></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-177931139-1"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-177931139-1')</script>
 <script>(function(c,e,f,h,b,d){c.MailerLiteObject=b;function a(){var b={a:arguments,q:[]},c=this.push(b);return"number"!=typeof c?c:a.bind(b.q)}a.q=a.q||[],c[b]=c[b]||a.bind(a.q),c[b].q=c[b].q||a.q,d=e.createElement(f);var g=e.getElementsByTagName(f)[0];d.async=1,d.src=h+'?v'+~~((new Date).getTime()/1e6),g.parentNode.insertBefore(d,g)})(window,document,'script','https://static.mailerlite.com/js/universal.js','ml');var ml_account=ml('accounts','2387594','n2l1g5f0i1','load')</script>

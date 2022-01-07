@@ -8,19 +8,19 @@
 <meta name=keywords content=",kubernetes,terraform,server,cloud,dev-ops">
 <meta name=robots content="noodp">
 <meta name=theme-color content="#d58432">
-<link rel=canonical href=https://sopanen.net/posts/using-traefik-as-ingress-controller-on-a-kubernetes-cluster-with-cert-manager-part-2/>
+<link rel=canonical href=https://vonsopanen.github.io/posts/using-traefik-as-ingress-controller-on-a-kubernetes-cluster-with-cert-manager-part-2/>
 <title>
 Using Traefik as Ingress Controller on a Kubernetes cluster with cert-manager | Part 2
 </title>
 <link href=https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.2.1/css/flag-icon.min.css rel=stylesheet type=text/css>
-<link rel=stylesheet href=https://sopanen.net/main.491d9de14a60a99da243398aa5873cb28a058c58cb30eb698c56e003d11d6aab.css>
+<link rel=stylesheet href=https://vonsopanen.github.io/main.491d9de14a60a99da243398aa5873cb28a058c58cb30eb698c56e003d11d6aab.css>
 <meta itemprop=name content="Using Traefik as Ingress Controller on a Kubernetes cluster with cert-manager | Part 2">
 <meta itemprop=description content="Part 2 of the Kubernetes blog series. In this part we deploy the Traefik dashboard and an example application to our cluster, fully TLS encrypted."><meta itemprop=datePublished content="2020-11-22T06:27:18+01:00">
 <meta itemprop=dateModified content="2020-11-22T06:27:18+01:00">
-<meta itemprop=wordCount content="1980"><meta itemprop=image content="https://sopanen.net/images/blog/7/header-image.png">
+<meta itemprop=wordCount content="1980"><meta itemprop=image content="https://vonsopanen.github.io/images/blog/7/header-image.png">
 <meta itemprop=keywords content="kubernetes,terraform,server,cloud,dev-ops,">
 <meta name=twitter:card content="summary_large_image">
-<meta name=twitter:image content="https://sopanen.net/images/blog/7/header-image.png">
+<meta name=twitter:image content="https://vonsopanen.github.io/images/blog/7/header-image.png">
 <meta name=twitter:title content="Using Traefik as Ingress Controller on a Kubernetes cluster with cert-manager | Part 2">
 <meta name=twitter:description content="Part 2 of the Kubernetes blog series. In this part we deploy the Traefik dashboard and an example application to our cluster, fully TLS encrypted.">
 <meta property="article:published_time" content="2020-11-22 06:27:18 +0100 +0100">
@@ -29,7 +29,7 @@ Using Traefik as Ingress Controller on a Kubernetes cluster with cert-manager | 
 <div class=container>
 <header class=header>
 <span class=header__inner>
-<a href=https://sopanen.net/ style=text-decoration:none>
+<a href=https://vonsopanen.github.io/ style=text-decoration:none>
 <div class=logo>
 <span class=logo__mark>></span>
 <span class=logo__text>$ cd /home/</span>
@@ -39,7 +39,7 @@ Using Traefik as Ingress Controller on a Kubernetes cluster with cert-manager | 
 </a>
 <span class=header__right>
 <nav class=menu>
-<ul class=menu__inner><li><a href=https://sopanen.net/about/>About</a></li><li><a href=https://sopanen.net/posts/>Posts</a></li>
+<ul class=menu__inner><li><a href=https://vonsopanen.github.io/about/>About</a></li><li><a href=https://vonsopanen.github.io/posts/>Posts</a></li>
 </ul>
 </nav>
 <span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
@@ -58,7 +58,7 @@ Using Traefik as Ingress Controller on a Kubernetes cluster with cert-manager | 
 </div>
 <article>
 <h1 class=post-title>
-<a href=https://sopanen.net/posts/using-traefik-as-ingress-controller-on-a-kubernetes-cluster-with-cert-manager-part-2/>Using Traefik as Ingress Controller on a Kubernetes cluster with cert-manager | Part 2</a>
+<a href=https://vonsopanen.github.io/posts/using-traefik-as-ingress-controller-on-a-kubernetes-cluster-with-cert-manager-part-2/>Using Traefik as Ingress Controller on a Kubernetes cluster with cert-manager | Part 2</a>
 </h1>
 <div class=post-content>
 <h2 id=introduction->Introduction 📌</h2>
@@ -89,7 +89,7 @@ Using Traefik as Ingress Controller on a Kubernetes cluster with cert-manager | 
 </ul>
 <p>From this moment on I am assuming that you have successfully installed and configured <code>kubectl</code> and <code>doctl</code>.</p>
 <p>When those are installed please visit the Digital Ocean dashboard and go to your cluster. There you will find a command to connect to your cluster, for easy multiple-cluster management.</p>
-<p><img src=https://sopanen.net/images/blog/7/kubernetes-connect-kubectl.png alt="Kubernetes Cluster Digital Ocean Kubectl"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/7/kubernetes-connect-kubectl.png alt="Kubernetes Cluster Digital Ocean Kubectl"></p>
 <p>Paste this command in your terminal and connect your cluster.</p>
 <pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ doctl kubernetes cluster kubeconfig save 33d303ec-4b1e-4972-8e9e-670344a64122
 </code></pre><p><strong>Output:</strong></p>
@@ -260,9 +260,9 @@ $ touch post-deployment/02-traefik/01-middleware.yml post-deployment/02-traefik/
 <pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ kubectl apply -f post-deployment/02-traefik/
 </code></pre><p>BOOM! We got it up and running. 🎯</p>
 <p>If you follow the domain name you will be greeted with a TLS encrypted route to the Traefik dashboard. After entering the basic auth username and password, the dashboard will be displayed. Awesome!</p>
-<p><img src=https://sopanen.net/images/blog/7/traefik-dashboard-1.png alt="Traefik Dashboard"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/7/traefik-dashboard-1.png alt="Traefik Dashboard"></p>
 <p>As you can see when you view the HTTP routers, you can see our dashboard route is safely secured with TLS and Traefik recognizes it as a Kubernetes route.</p>
-<p><img src=https://sopanen.net/images/blog/7/traefik-dashboard-2.png alt="Traefik HTTP Routers"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/7/traefik-dashboard-2.png alt="Traefik HTTP Routers"></p>
 <h2 id=an-example-application>An example application</h2>
 <p>With the dashboard up and running, let&rsquo;s deploy an example <code>whoami</code> application with TLS encryption. The first thing you have to do again, is to add a DNS entry for the <code>whoami</code> service. Then add the appropriate folder and files:</p>
 <pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ mkdir post-deployment/03-whoami
@@ -348,9 +348,9 @@ $ touch post-deployment/03-whoami/01-whoami.yml post-deployment/03-whoami/02-ing
 </code></pre><p>If everything thing went well and your certificate was successfully issued, deploy the <code>whoami</code> service:</p>
 <pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ kubectl apply -f post-deployment/03-whoami/
 </code></pre><p>Great work! 🔥 As you can see, the <code>whoami</code> service is available through the domain name, running over TLS:</p>
-<p><img src=https://sopanen.net/images/blog/7/whoami-service.png alt="Whoami Service"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/7/whoami-service.png alt="Whoami Service"></p>
 <p>You can see the service in the Traefik dashboard now as well:</p>
-<p><img src=https://sopanen.net/images/blog/7/traefik-dashboard-3.png alt="Whoami Service in Traefik dashboard"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/7/traefik-dashboard-3.png alt="Whoami Service in Traefik dashboard"></p>
 <h2 id=conclusion->Conclusion ⚡</h2>
 <p>Alright so in this blog post we configured our cluster further.</p>
 <p>We exposed the Traefik dashboard and deployed an example application. Of course, now it is time to build on this. The issuing of certificates and deployment of the ingress routes, for example, is something that can be automated as well.</p>
@@ -366,7 +366,7 @@ $ touch post-deployment/03-whoami/01-whoami.yml post-deployment/03-whoami/02-ing
 <hr>
 <div class=post-info>
 <p>
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83.0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7" y2="7"/></svg><span class=tag><a href=https://sopanen.net/tags/kubernetes/>kubernetes</a></span><span class=tag><a href=https://sopanen.net/tags/terraform/>terraform</a></span><span class=tag><a href=https://sopanen.net/tags/server/>server</a></span><span class=tag><a href=https://sopanen.net/tags/cloud/>cloud</a></span><span class=tag><a href=https://sopanen.net/tags/dev-ops/>dev-ops</a></span>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83.0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7" y2="7"/></svg><span class=tag><a href=https://vonsopanen.github.io/tags/kubernetes/>kubernetes</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/terraform/>terraform</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/server/>server</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/cloud/>cloud</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/dev-ops/>dev-ops</a></span>
 </p>
 <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
 1980 Words
@@ -382,13 +382,13 @@ $ touch post-deployment/03-whoami/01-whoami.yml post-deployment/03-whoami/02-ing
 </div>
 <div class=pagination__buttons>
 <span class="button previous">
-<a href=https://sopanen.net/posts/deploying-fastapi-on-aws-as-a-lambda-container-image/>
+<a href=https://vonsopanen.github.io/posts/deploying-fastapi-on-aws-as-a-lambda-container-image/>
 <span class=button__icon>←</span>
 <span class=button__text>Deploying FastAPI on AWS as a lambda container image</span>
 </a>
 </span>
 <span class="button next">
-<a href=https://sopanen.net/posts/kubernetes-with-terraform-traefik-v2-cert-manager-part-1/>
+<a href=https://vonsopanen.github.io/posts/kubernetes-with-terraform-traefik-v2-cert-manager-part-1/>
 <span class=button__text>Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1</span>
 <span class=button__icon>→</span>
 </a>
@@ -407,12 +407,12 @@ $ touch post-deployment/03-whoami/01-whoami.yml post-deployment/03-whoami/02-ing
 <div class=footer__inner>
 <div class=footer__content>
 <span>© 2020</span>
-<a href=https://sopanen.net/><span>Raf Rasenberg</span></a>
+<a href=https://vonsopanen.github.io/><span>Raf Rasenberg</span></a>
 </div>
 </div>
 </footer>
 </div>
-<script type=text/javascript src=https://sopanen.net/bundle.min.a0f363fdf81cdc5cfacc447a79c33189eb000d090336cd04aac8ee256f423b3133b836c281944c19c75e38d0b0b449f01ce5807e37798b7ac94ac1db51983fc4.js integrity="sha512-oPNj/fgc3Fz6zER6ecMxiesADQkDNs0EqsjuJW9COzEzuDbCgZRMGcdeONCwtEnwHOWAfjd5i3rJSsHbUZg/xA=="></script>
+<script type=text/javascript src=https://vonsopanen.github.io/bundle.min.a0f363fdf81cdc5cfacc447a79c33189eb000d090336cd04aac8ee256f423b3133b836c281944c19c75e38d0b0b449f01ce5807e37798b7ac94ac1db51983fc4.js integrity="sha512-oPNj/fgc3Fz6zER6ecMxiesADQkDNs0EqsjuJW9COzEzuDbCgZRMGcdeONCwtEnwHOWAfjd5i3rJSsHbUZg/xA=="></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-177931139-1"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-177931139-1')</script>
 <script>(function(c,e,f,h,b,d){c.MailerLiteObject=b;function a(){var b={a:arguments,q:[]},c=this.push(b);return"number"!=typeof c?c:a.bind(b.q)}a.q=a.q||[],c[b]=c[b]||a.bind(a.q),c[b].q=c[b].q||a.q,d=e.createElement(f);var g=e.getElementsByTagName(f)[0];d.async=1,d.src=h+'?v'+~~((new Date).getTime()/1e6),g.parentNode.insertBefore(d,g)})(window,document,'script','https://static.mailerlite.com/js/universal.js','ml');var ml_account=ml('accounts','2387594','n2l1g5f0i1','load')</script>

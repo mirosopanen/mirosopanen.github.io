@@ -8,21 +8,21 @@
 <meta name=keywords content=",AWS,Python">
 <meta name=robots content="noodp">
 <meta name=theme-color content="#d58432">
-<link rel=canonical href=https://sopanen.net/posts/aws-lambda-function-to-retrieve-twitter-follower-count/>
+<link rel=canonical href=https://vonsopanen.github.io/posts/aws-lambda-function-to-retrieve-twitter-follower-count/>
 <title>
 AWS Lambda function to retrieve Twitter follower count
 </title>
 <link href=https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.2.1/css/flag-icon.min.css rel=stylesheet type=text/css>
-<link rel=stylesheet href=https://sopanen.net/main.491d9de14a60a99da243398aa5873cb28a058c58cb30eb698c56e003d11d6aab.css>
+<link rel=stylesheet href=https://vonsopanen.github.io/main.491d9de14a60a99da243398aa5873cb28a058c58cb30eb698c56e003d11d6aab.css>
 <meta itemprop=name content="AWS Lambda function to retrieve Twitter follower count">
 <meta itemprop=description content="Intro 👇 One of my goals for this current year is to get more comfortable with AWS and get certified eventually. Therefore I will be trying out different things and blogging about it here.
 I am starting out with a quite simple task and that is deploying an AWS Lambda function. In this case an AWS Lambda function that retrieves the count of your current Twitter followers.
 Everytime the AWS API endpoint gets called, a Python script will run that will retrieve the current stats from the Twitter API and then returns it in JSON format so it can be easily used across systems."><meta itemprop=datePublished content="2020-08-29T09:28:55+02:00">
 <meta itemprop=dateModified content="2020-08-29T09:28:55+02:00">
-<meta itemprop=wordCount content="1788"><meta itemprop=image content="https://sopanen.net">
+<meta itemprop=wordCount content="1788"><meta itemprop=image content="https://vonsopanen.github.io">
 <meta itemprop=keywords content="AWS,Python,">
 <meta name=twitter:card content="summary_large_image">
-<meta name=twitter:image content="https://sopanen.net">
+<meta name=twitter:image content="https://vonsopanen.github.io">
 <meta name=twitter:title content="AWS Lambda function to retrieve Twitter follower count">
 <meta name=twitter:description content="Intro 👇 One of my goals for this current year is to get more comfortable with AWS and get certified eventually. Therefore I will be trying out different things and blogging about it here.
 I am starting out with a quite simple task and that is deploying an AWS Lambda function. In this case an AWS Lambda function that retrieves the count of your current Twitter followers.
@@ -33,7 +33,7 @@ Everytime the AWS API endpoint gets called, a Python script will run that will r
 <div class=container>
 <header class=header>
 <span class=header__inner>
-<a href=https://sopanen.net/ style=text-decoration:none>
+<a href=https://vonsopanen.github.io/ style=text-decoration:none>
 <div class=logo>
 <span class=logo__mark>></span>
 <span class=logo__text>$ cd /home/</span>
@@ -43,7 +43,7 @@ Everytime the AWS API endpoint gets called, a Python script will run that will r
 </a>
 <span class=header__right>
 <nav class=menu>
-<ul class=menu__inner><li><a href=https://sopanen.net/about/>About</a></li><li><a href=https://sopanen.net/posts/>Posts</a></li>
+<ul class=menu__inner><li><a href=https://vonsopanen.github.io/about/>About</a></li><li><a href=https://vonsopanen.github.io/posts/>Posts</a></li>
 </ul>
 </nav>
 <span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
@@ -62,7 +62,7 @@ Everytime the AWS API endpoint gets called, a Python script will run that will r
 </div>
 <article>
 <h1 class=post-title>
-<a href=https://sopanen.net/posts/aws-lambda-function-to-retrieve-twitter-follower-count/>AWS Lambda function to retrieve Twitter follower count</a>
+<a href=https://vonsopanen.github.io/posts/aws-lambda-function-to-retrieve-twitter-follower-count/>AWS Lambda function to retrieve Twitter follower count</a>
 </h1>
 <div class=post-content>
 <h2 id=intro->Intro 👇</h2>
@@ -88,13 +88,13 @@ Everytime the AWS API endpoint gets called, a Python script will run that will r
 <p>In order to set-up the Lambda function you need to create an AWS account. Login using your existing account or sign up for a new account using <a href=https://console.aws.amazon.com/>this link</a>.</p>
 <p>After the initial set-up of your account, follow the menu link <em><strong>Services</strong></em>, then under the heading <em><strong>Compute</strong></em> click on the link <em><strong>Lambda</strong></em>.</p>
 <p>On the left side you are greeted with a small menu, go to <em><strong>Functions</strong></em>. Here we will create the base of the function and give it a name. Later on we are deploying our actual Python code from the command line using the AWS CLI tool.</p>
-<p><img src=https://sopanen.net/images/blog/1/image1.png alt="create AWS Lambda function"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/1/image1.png alt="create AWS Lambda function"></p>
 <p>Name the function <code>getTwitterFollowerCount</code> and at runtime choose Python 3.8, since we are using Python code later on. AWS Lambda has all the major languages available, so you can easily pick another one in a later stage if you would prefer that.</p>
 <p>At the permission section make sure you pick the first option: &ldquo;Create a new role with basic Lambda permissions&rdquo;. Now finalize it and create the actual function by going to the top-right side of the page and click <em><strong>Create Function</strong></em>.</p>
 <p>Congrats you have made your first AWS Lambda Function! 🏆</p>
 <h2 id=testing-our-new-function->Testing our new function ✅</h2>
 <p>Alrighty, time to test our new function. If everything went correct you will be greeted with a configuration panel of the function you have just made, similar to the one below.</p>
-<p><img src=https://sopanen.net/images/blog/1/image2.png alt="controlpanel AWS Lambda function"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/1/image2.png alt="controlpanel AWS Lambda function"></p>
 <p>As you can see in the function code, every function that gets created comes with some boilerplate code that includes a Lambda handler. The Lambda handler is the function in your code, that AWS Lambda can invoke when the service executes your code. For Python the general syntax structure looks like this:</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>handler_name</span>(event, context): 
     <span style=color:#f92672>...</span>
@@ -109,10 +109,10 @@ Everytime the AWS API endpoint gets called, a Python script will run that will r
 </code></pre></div><p>Let&rsquo;s see what is going on here. Whenever the Lambda function gets executed, it will run this Python function and then return a <code>statuscode 200</code> and a JSON response saying <code>Hello from Lambda!</code></p>
 <p>Time to test this!</p>
 <p>Click the <em><strong>Test</strong></em> button at the right top of the function configuration panel. You will see a pop-up like the one below. We can use all the default settings here for this small test. The only thing we need to do is entering <code>testEvent</code> at the &ldquo;Event name&rdquo; field. Once done, click <em><strong>Create</strong></em> at the bottom right.</p>
-<p><img src=https://sopanen.net/images/blog/1/image3.png alt="test event for AWS Lambda function"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/1/image3.png alt="test event for AWS Lambda function"></p>
 <p>All done. Now all that is left is the actual test of the function. Click the <em><strong>Test</strong></em> button again and look at the output below. As you can see we ran our function and got our JSON response back, neat! 🔥</p>
 <p>There is some additional information that is available to us that you can find back in the logs each time you execute a Lambda function. This is for example: the request ID, the time it took to execute the function, the memory usage etc.</p>
-<p><img src=https://sopanen.net/images/blog/1/image4.png alt="test log AWS Lambda function"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/1/image4.png alt="test log AWS Lambda function"></p>
 <p>So we created the Lambda function, tested it, now it is time to write our actual Python function that contains the logic for retrieving data from the Twitter API regarding our current follower count.</p>
 <h2 id=writing-our-python-code->Writing our Python code 🐍</h2>
 <p>Alright the first thing we do is creating a virtual environment for Python, so that all our packages are contained within this envirnoment and not installed globally. Make sure you have installed <code>virtualenv</code> and <code>pip</code>. There are a lot of resources available on the internet for this, I won&rsquo;t get into that here since it is out of the scope of this blogpost.</p>
@@ -189,14 +189,14 @@ Everytime the AWS API endpoint gets called, a Python script will run that will r
 }
 </code></pre><h2 id=setting-up-the-api-gateway>Setting up the API Gateway</h2>
 <p>The final step we have to take is setting up an API endpoint, so we can actually call our function through a HTTP call. Go back to the AWS console and the function configuration panel. Click the <em><strong>Add trigger</strong></em> button.</p>
-<p><img src=https://sopanen.net/images/blog/1/image5.png alt="test log AWS Lambda function"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/1/image5.png alt="test log AWS Lambda function"></p>
 <p>In the following screen use the settings below and click the button <em><strong>Add</strong></em>.</p>
-<p><img src=https://sopanen.net/images/blog/1/image6.png alt="test log AWS Lambda function"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/1/image6.png alt="test log AWS Lambda function"></p>
 <blockquote>
 <h3 id=done->DONE! 🔥🏆</h3>
 </blockquote>
 <p>All that is left now is checking what our actual HTTP endpoint is and test it, to see if everything works as it should. Check out the API Gateway at the bottom of the dashboard and expand it by pressing <em><strong>Details</strong></em>. As you can see we can find the API endpoint there.</p>
-<p><img src=https://sopanen.net/images/blog/1/image7.png alt="test log AWS Lambda function"></p>
+<p><img src=https://vonsopanen.github.io/images/blog/1/image7.png alt="test log AWS Lambda function"></p>
 <p>Fire up the command line and use something like <code>curl</code> to test for the response.</p>
 <pre tabindex=0><code>$ curl 'https://4k1g4gaqz2.execute-api.eu-central-1.amazonaws.com/default/getTwitterFollowerCount'
 </code></pre><p>If everything went well, you just received a nice JSON response with your current follower count!</p>
@@ -210,7 +210,7 @@ Everytime the AWS API endpoint gets called, a Python script will run that will r
 <hr>
 <div class=post-info>
 <p>
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83.0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7" y2="7"/></svg><span class=tag><a href=https://sopanen.net/tags/aws/>AWS</a></span><span class=tag><a href=https://sopanen.net/tags/python/>Python</a></span>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83.0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7" y2="7"/></svg><span class=tag><a href=https://vonsopanen.github.io/tags/aws/>AWS</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/python/>Python</a></span>
 </p>
 <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
 1788 Words
@@ -226,7 +226,7 @@ Everytime the AWS API endpoint gets called, a Python script will run that will r
 </div>
 <div class=pagination__buttons>
 <span class="button previous">
-<a href=https://sopanen.net/posts/deploying-a-serverless-microservice-with-flask-zappa/>
+<a href=https://vonsopanen.github.io/posts/deploying-a-serverless-microservice-with-flask-zappa/>
 <span class=button__icon>←</span>
 <span class=button__text>Deploying a serverless microservice with Flask & Zappa</span>
 </a>
@@ -245,12 +245,12 @@ Everytime the AWS API endpoint gets called, a Python script will run that will r
 <div class=footer__inner>
 <div class=footer__content>
 <span>© 2020</span>
-<a href=https://sopanen.net/><span>Raf Rasenberg</span></a>
+<a href=https://vonsopanen.github.io/><span>Raf Rasenberg</span></a>
 </div>
 </div>
 </footer>
 </div>
-<script type=text/javascript src=https://sopanen.net/bundle.min.a0f363fdf81cdc5cfacc447a79c33189eb000d090336cd04aac8ee256f423b3133b836c281944c19c75e38d0b0b449f01ce5807e37798b7ac94ac1db51983fc4.js integrity="sha512-oPNj/fgc3Fz6zER6ecMxiesADQkDNs0EqsjuJW9COzEzuDbCgZRMGcdeONCwtEnwHOWAfjd5i3rJSsHbUZg/xA=="></script>
+<script type=text/javascript src=https://vonsopanen.github.io/bundle.min.a0f363fdf81cdc5cfacc447a79c33189eb000d090336cd04aac8ee256f423b3133b836c281944c19c75e38d0b0b449f01ce5807e37798b7ac94ac1db51983fc4.js integrity="sha512-oPNj/fgc3Fz6zER6ecMxiesADQkDNs0EqsjuJW9COzEzuDbCgZRMGcdeONCwtEnwHOWAfjd5i3rJSsHbUZg/xA=="></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-177931139-1"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-177931139-1')</script>
 <script>(function(c,e,f,h,b,d){c.MailerLiteObject=b;function a(){var b={a:arguments,q:[]},c=this.push(b);return"number"!=typeof c?c:a.bind(b.q)}a.q=a.q||[],c[b]=c[b]||a.bind(a.q),c[b].q=c[b].q||a.q,d=e.createElement(f);var g=e.getElementsByTagName(f)[0];d.async=1,d.src=h+'?v'+~~((new Date).getTime()/1e6),g.parentNode.insertBefore(d,g)})(window,document,'script','https://static.mailerlite.com/js/universal.js','ml');var ml_account=ml('accounts','2387594','n2l1g5f0i1','load')</script>
