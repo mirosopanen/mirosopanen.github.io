@@ -1,5 +1,5 @@
-baseURL = "https://vonsopanen.github.io"
-title   = "Raf Rasenberg"
+baseURL = "https://sopanen.net"
+title   = "Miro Sopanen"
 
 DefaultContentLanguage = "en"
 
@@ -38,7 +38,7 @@ disableHugoGeneratorInject = false
   posts = "/posts/:title/"
 
 [author]
-  name = "Raf Rasenberg"
+  name = "Miro Sopanen"
 
 [blackfriday]
   plainIDAnchors = true
@@ -59,7 +59,7 @@ disableHugoGeneratorInject = false
   keywords = ""
   images = [""]
 
-  homeSubtitle = "Software Engineer"
+  homeSubtitle = "Student programmer"
 
   # Prefix of link to the git commit detail page. GitInfo must be enabled.
   # gitUrl = ""
@@ -90,23 +90,17 @@ disableHugoGeneratorInject = false
   # Social icons
   [[params.social]]
     name = "twitter"
-    url  = "https://twitter.com/rafrasenberg"
+    url  = "https://twitter.com/vonsopanen"
 
   [[params.social]]
     name = "instagram"
-    url  = "https://instagram.com/rafrasenberg"
+    url  = "https://instagram.com/souuoa"
 
-  [[params.social]]
-    name = "youtube"
-    url  = "https://youtube.com/rafrasenberg"
 
-  [[params.social]]
-    name = "linkedin"
-    url  = "https://www.linkedin.com/in/rafrasenberg"
 
   [[params.social]]
     name = "github"
-    url  = "https://github.com/rafrasenberg"
+    url  = "https://github.com/vonsopanen"
 
 
 

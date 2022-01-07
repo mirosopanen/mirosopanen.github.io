@@ -1,12 +1,12 @@
 ---
 title: "About"
-date: 2020-07-25T07:34:51+02:00
+date: 2022-01-25T07:34:51+02:00
 draft: true
 ---
 
 ## Coding
 
-I am Raf Rasenberg, a Dutch 🇳🇱 Software Engineer with 4 years of experience and a big passion for back-end, cloud, and anything DevOps related. Configuring CI/CD pipelines, Kubernetes, serverless and IaC to name a few buzz words.
+I am Miro Sopanen, Finnish high school student who also codes. I usually code on Python but occasionally I may do something fun using different kinds of techniques.
 
 I focus on delivering high-quality (containerized) -and mostly serverless- software solutions, using clean code methods like TDD in agile environments. Big fan of Linux!
 
@@ -15,9 +15,9 @@ Coming from a business background, non-technical communication and focus on cost
 #### Core expertise
 
 - Python
-- AWS
+- Html
 - Serverless
-- Docker
+- Rust
 - Kubernetes
 - JavaScript
 
