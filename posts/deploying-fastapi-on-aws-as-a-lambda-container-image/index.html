@@ -1,0 +1,583 @@
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="ie=edge">
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=author content="Raf Rasenberg ">
+<meta name=description content="Setting up a serverless Lambda container image on AWS running FastAPI. It will be a single Lambda function with an API gateway endpoint attached to it.">
+<meta name=keywords content=",aws,serverless,fastapi,docker">
+<meta name=robots content="noodp">
+<meta name=theme-color content="#d58432">
+<link rel=canonical href=https://vonsopanen.github.io/posts/deploying-fastapi-on-aws-as-a-lambda-container-image/>
+<title>
+Deploying FastAPI on AWS as a lambda container image
+</title>
+<link href=https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.2.1/css/flag-icon.min.css rel=stylesheet type=text/css>
+<link rel=stylesheet href=https://vonsopanen.github.io/main.491d9de14a60a99da243398aa5873cb28a058c58cb30eb698c56e003d11d6aab.css>
+<meta itemprop=name content="Deploying FastAPI on AWS as a lambda container image">
+<meta itemprop=description content="Setting up a serverless Lambda container image on AWS running FastAPI. It will be a single Lambda function with an API gateway endpoint attached to it."><meta itemprop=datePublished content="2021-02-21T15:07:13+01:00">
+<meta itemprop=dateModified content="2021-02-21T15:07:13+01:00">
+<meta itemprop=wordCount content="2793"><meta itemprop=image content="https://vonsopanen.github.io/images/blog/8/header-image.png">
+<meta itemprop=keywords content="aws,serverless,fastapi,docker,">
+<meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://vonsopanen.github.io/images/blog/8/header-image.png">
+<meta name=twitter:title content="Deploying FastAPI on AWS as a lambda container image">
+<meta name=twitter:description content="Setting up a serverless Lambda container image on AWS running FastAPI. It will be a single Lambda function with an API gateway endpoint attached to it.">
+<meta property="article:published_time" content="2021-02-21 15:07:13 +0100 +0100">
+</head>
+<body class=dark-theme>
+<div class=container>
+<header class=header>
+<span class=header__inner>
+<a href=https://vonsopanen.github.io/ style=text-decoration:none>
+<div class=logo>
+<span class=logo__mark>></span>
+<span class=logo__text>$ cd /home/</span>
+<span class=logo__cursor>
+</span>
+</div>
+</a>
+<span class=header__right>
+<nav class=menu>
+<ul class=menu__inner><li><a href=https://vonsopanen.github.io/about/>About</a></li><li><a href=https://vonsopanen.github.io/posts/>Posts</a></li>
+</ul>
+</nav>
+<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+</span>
+<span class="theme-toggle unselectable"><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg>
+</span>
+</span>
+</span>
+</header>
+<div class=content>
+<main class=post>
+<div class=post-info>
+<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+14 minutes
+</p>
+</div>
+<article>
+<h1 class=post-title>
+<a href=https://vonsopanen.github.io/posts/deploying-fastapi-on-aws-as-a-lambda-container-image/>Deploying FastAPI on AWS as a lambda container image</a>
+</h1>
+<div class=post-content>
+<h2 id=introduction->Introduction 📌</h2>
+<p>Today we are setting up a serverless Lambda container image on AWS running FastAPI. It will be a single Lambda function with an API gateway endpoint attached to it. To handle internal routing we will use the library, <a href=https://github.com/jordaneremieff/mangum>Mangum</a>.</p>
+<p>Our Docker image will be registered on ECR and we will deploy it using the serverless framework. I&rsquo;m super excited for this blog post since this is an awesome stack, so let&rsquo;s start!</p>
+<blockquote>
+<p>Article experience level: <strong>Intermediate</strong></p>
+</blockquote>
+<p>I categorize every article based on complexity. It&rsquo;s a good way to indicate how well you can follow along with the article since it determines how deep I will explain certain concepts.</p>
+<p><strong>Prerequisites</strong></p>
+<ul>
+<li>Docker installed</li>
+<li>Serverless framework installed</li>
+<li>AWS account</li>
+<li>AWS CLI set-up</li>
+</ul>
+<p>👉 <a href=https://github.com/rafrasenberg/fastapi-lamba-aws>The Github repo for this blog post</a></p>
+<h2 id=aws-lambda-container-image->AWS Lambda container image ☁️</h2>
+<p>Last December, AWS announced container support for Lambda functions. What this means is that you can now package and deploy Lambda functions as container images of up to 10GB in size.</p>
+<p>This is a really neat feature since you can easily add dependencies without the usage of layers. It also means that you won&rsquo;t have to zip your functions anymore and you can easily add these container builds for your Lambda functions to your CI/CD pipelines. 😄</p>
+<p>Just like functions packaged as ZIP archives, functions deployed as container images benefit from the same operational simplicity, automatic scaling, high availability, and native integrations with many services.</p>
+<p>Multiple benefits come with running Lambda functions as container images:</p>
+<ul>
+<li>Better dependency management</li>
+<li>Version control (using Docker image tags)</li>
+<li>Easy integration into your CI/CD pipeline</li>
+<li>Better testing capabilities (run your Lambda runtime locally)</li>
+</ul>
+<p>Are you convinced? I am! So let&rsquo;s dive into it. 🙌</p>
+<h2 id=whats-fastapi>What&rsquo;s FastAPI?</h2>
+<p>If you aren&rsquo;t yet familiar with it, FastAPI is a modern, fast (high-performance), web framework for building APIs with Python 3.6+, based on standard Python type hints.</p>
+<p>It&rsquo;s high performance, on par with NodeJS and Go thanks to the usage of <code>Starlette</code> and <code>Pydantic</code>. It&rsquo;s very easy to write and you need a minimal amount of code to create a robust API. 🚧</p>
+<p>Besides that, it comes packed with fully automatic interactive documentation for your API endpoints, which is super neat! Less time writing the API docs, more time coding the actual app.</p>
+<h2 id=setting-up-our-workspace>Setting up our workspace</h2>
+<p>For this post, I am going to assume that you have an AWS account and that you have set-up your AWS keys in your <code>~./aws</code> directory. Besides that, you&rsquo;ll need <code>serverless</code> and <code>Docker</code> installed as well. So if you haven&rsquo;t already, do that first.</p>
+<p>The first thing we are doing is setting up our folder structure and Docker files. To simplify this process or if you are lazy, you can visit the Github repo and fork/clone it.</p>
+<p>Make sure your project has the following folders and files. We&rsquo;ll go over each of them and fill them up throughout this post. 🚀</p>
+<pre tabindex=0><code>.
+├── compose/
+│   ├── dev/
+│   │   └── Dockerfile
+│   └── prod/
+│       └── Dockerfile
+├── requirements/
+│   ├── dev.txt
+│   └── prod.txt
+├── app/
+│   ├── api_v1/
+│   └── main.py
+├── serverless.yml
+├── functions.yml
+└── docker-compose.yml
+</code></pre><h2 id=creating-our-dockerfiles>Creating our dockerfiles</h2>
+<h4 id=development-container>Development container</h4>
+<p>Let&rsquo;s start with our Docker files. What we ideally want is a container for development, in which we will run our FastAPI development server. And then a separate container which will be our production image that will be deployed to AWS. ☁️</p>
+<p>For our development container we&rsquo;ll use the Python 3.9 alpine image:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-docker data-lang=docker><span style=color:#66d9ef>FROM</span><span style=color:#e6db74> python:3.9-alpine</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>WORKDIR</span><span style=color:#e6db74> /usr/src/app</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>COPY</span> requirements/dev.txt ./<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>RUN</span> python3 -m ensurepip<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>RUN</span> pip install -r dev.txt<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>ENV</span> PYTHONPATH <span style=color:#e6db74>&#34;</span><span style=color:#e6db74>${</span>PYTHONPATH<span style=color:#e6db74>}</span><span style=color:#e6db74>:/usr/src/app/src&#34;</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>CMD</span> [<span style=color:#e6db74>&#34;uvicorn&#34;</span>, <span style=color:#e6db74>&#34;src.main:app&#34;</span>, <span style=color:#e6db74>&#34;--host&#34;</span>, <span style=color:#e6db74>&#34;0.0.0.0&#34;</span>, <span style=color:#e6db74>&#34;--port&#34;</span>, <span style=color:#e6db74>&#34;8000&#34;</span>, <span style=color:#e6db74>&#34;--reload&#34;</span>]<span style=color:#960050;background-color:#1e0010>
+</span></code></pre></div><p>It will install our <code>dev</code> requirements, set our Python path inside the container for easy imports, and it will run the FastAPI development server on port 8000.</p>
+<p>The dev requirements will contain the following:</p>
+<pre tabindex=0><code>mangum==0.10.0
+fastapi==0.63.0
+uvicorn==0.13.3
+
+## Add whatever you need in your dev env
+# pytest
+# coverage
+# black
+# etc...
+</code></pre><p>As you can see we are using Mangum here.</p>
+<p>This is an adapter for using ASGI applications with AWS Lambda & API Gateway. It is intended to provide an easy-to-use, configurable wrapper for any ASGI application, deployed in an AWS Lambda function to handle API Gateway requests and responses.</p>
+<p>This will allow us to develop our API using FastAPI just as if we would when deploying it on a traditional server. 🔥</p>
+<p>You can extend your development container as much as you want, installing all your preferred dev tools and testing frameworks. Since we are locking this into <code>dev.txt</code>, our lambda image for deployment will be nice and slim, containing only the stuff we <strong>really</strong> need in production.</p>
+<h4 id=deployment-container>Deployment container</h4>
+<p>AWS has certain requirements for the Docker images, so for our deployment container we will use the AWS-Provided base image for Python 3.8</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-docker data-lang=docker><span style=color:#66d9ef>FROM</span><span style=color:#e6db74> public.ecr.aws/lambda/python:3.8</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>COPY</span> requirements/prod.txt <span style=color:#e6db74>${</span>LAMBDA_TASK_ROOT<span style=color:#e6db74>}</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>RUN</span> python3 -m ensurepip<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>RUN</span> pip install -r prod.txt<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>ADD</span> src <span style=color:#e6db74>${</span>LAMBDA_TASK_ROOT<span style=color:#e6db74>}</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>CMD</span> [<span style=color:#e6db74>&#34;main.handler&#34;</span>]<span style=color:#960050;background-color:#1e0010>
+</span></code></pre></div><p>Here we copy our files into the <code>LAMBDA_TASK_ROOT</code> which is a runtime environment variable provided by AWS and translates to the path of our Lambda function code.</p>
+<p>In the end, we attach our FastAPI handler to the image with <code>main.handler</code>.</p>
+<h4 id=docker-compose-file>Docker compose file</h4>
+<p>To avoid long and repetitive Docker commands we use docker-compose. Add the following config to your <code>docker-compose.yml</code> file:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=color:#f92672>version</span>: <span style=color:#e6db74>&#34;3.8&#34;</span>
+
+<span style=color:#f92672>services</span>:
+  <span style=color:#f92672>lambda-fastapi-prod</span>:
+    <span style=color:#f92672>build</span>:
+      <span style=color:#f92672>context</span>: <span style=color:#ae81ff>.</span>
+      <span style=color:#f92672>dockerfile</span>: <span style=color:#ae81ff>./compose/prod/Dockerfile</span>
+    <span style=color:#f92672>image</span>: <span style=color:#ae81ff>&lt;specific-image-name&gt;</span>
+    <span style=color:#f92672>container_name</span>: <span style=color:#ae81ff>lambda-fastapi-prod</span>
+    <span style=color:#f92672>ports</span>:
+      - <span style=color:#ae81ff>9000</span>:<span style=color:#ae81ff>8080</span>
+
+  <span style=color:#f92672>lambda-fastapi-dev</span>:
+    <span style=color:#f92672>build</span>:
+      <span style=color:#f92672>context</span>: <span style=color:#ae81ff>.</span>
+      <span style=color:#f92672>dockerfile</span>: <span style=color:#ae81ff>./compose/dev/Dockerfile</span>
+    <span style=color:#f92672>image</span>: <span style=color:#ae81ff>lambda-fastapi-dev:latest</span>
+    <span style=color:#f92672>container_name</span>: <span style=color:#ae81ff>lambda-fastapi-dev</span>
+    <span style=color:#f92672>volumes</span>:
+      - <span style=color:#ae81ff>./src:/usr/src/app/src</span>
+    <span style=color:#f92672>ports</span>:
+      - <span style=color:#ae81ff>8000</span>:<span style=color:#ae81ff>8000</span>
+</code></pre></div><p>The <code>image</code> tag for the production container we will fill in later since this needs to be a specific tag so that we can use it with AWS ECR.</p>
+<h2 id=create-the-fastapi-server>Create the FastAPI server</h2>
+<p>Alright on to the fun part! Let&rsquo;s create our FastAPI server. In <code>src/main.py</code> put the following code:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> fastapi <span style=color:#f92672>import</span> FastAPI
+<span style=color:#f92672>from</span> mangum <span style=color:#f92672>import</span> Mangum
+
+app <span style=color:#f92672>=</span> FastAPI(
+    title<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;My Awesome FastAPI app&#34;</span>,
+    description<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;This is super fancy, with auto docs and everything!&#34;</span>,
+    version<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;0.1.0&#34;</span>,
+)
+
+
+<span style=color:#a6e22e>@app</span><span style=color:#f92672>.</span>get(<span style=color:#e6db74>&#34;/ping&#34;</span>, name<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;Healthcheck&#34;</span>, tags<span style=color:#f92672>=</span>[<span style=color:#e6db74>&#34;Healthcheck&#34;</span>])
+<span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>healthcheck</span>():
+    <span style=color:#66d9ef>return</span> {<span style=color:#e6db74>&#34;Success&#34;</span>: <span style=color:#e6db74>&#34;Pong!&#34;</span>}
+
+
+handler <span style=color:#f92672>=</span> Mangum(app)
+</code></pre></div><p>Here we create a simple <code>/ping</code> endpoint to test our app with. As you can see, since FastAPI runs on Starlette we can use async Python here! How cool is that. I can see the async king Node.js, crying in the corner already. 😄</p>
+<p>As you can see, Mangum wraps around the FastAPI app and is specified as the handler, to allow usage on Lambda.</p>
+<h2 id=run-the-development-server>Run the development server</h2>
+<p>Time to build our container and run our development server! Within the root directory of your project:</p>
+<pre tabindex=0><code>docker-compose up lambda-fastapi-dev
+</code></pre><p>This will build the development container and run it. Here I am specifically not detaching the container so we can use the terminal for debugging purposes since FastAPI will log output there. 💪</p>
+<p>The reason we are only running and building our dev container here is because we didn&rsquo;t specify the image tag of our deployment container yet, which we will do later on.</p>
+<p>With your image build and FastAPI running in your container, visit <code>localhost:8000/ping</code> to check if everything is working. If all went well, you are greeted with our health check message <code>pong</code>. 🎾</p>
+<h4 id=auto-interactive-docs>Auto interactive docs</h4>
+<p>A really neat feature that&rsquo;s built into FastAPI, is the interactive auto doc feature. Visit <code>localhost:8000/docs</code> to see it in action.</p>
+<p>Try firing the endpoints, you can do it straight from the docs! Awesome right? 😄</p>
+<p>You can focus on writing your API code, while FastAPI is taking care of the documenting part. This becomes especially useful when your app scales and you are working with larger, decoupled teams.</p>
+<h2 id=using-aws-ecr>Using AWS ECR</h2>
+<p>To deploy our Lambda image, we need our container image to be registered at AWS&rsquo;s Elastic Container Registry. From here on I am assuming you have an AWS account with the proper rights, and you have the AWS CLI set-up. If you haven&rsquo;t yet, do that first to continue!</p>
+<p>First, we need to create a new ECR repository:</p>
+<pre tabindex=0><code>aws ecr create-repository --repository-name lambda-fastapi --region eu-west-1
+</code></pre><p>From the output of this command search for <code>repositoryUri</code>. Note this. In my case this is:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=color:#e6db74>&#34;repositoryUri&#34;</span><span style=color:#960050;background-color:#1e0010>:</span> <span style=color:#e6db74>&#34;105477761364.dkr.ecr.eu-west-1.amazonaws.com/lambda-fastapi&#34;</span>
+</code></pre></div><p>What we do next is logging into ECR with Docker. Take the first part of the <code>repositoryUri</code> and use that at the end of the command, like below.</p>
+<p>For the observant people, yes that&rsquo;s your AWS account number. ECR URLs always follow this same structure: <code>&lt;account-number>.dkr.ecr.&lt;your-region>.amazonaws.com</code>.</p>
+<pre tabindex=0><code>aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 105477761364.dkr.ecr.eu-west-1.amazonaws.com
+</code></pre><h4 id=building-our-production-image>Building our production image</h4>
+<p>Alright, with that out of the way, let&rsquo;s go back to our <code>docker-compose.yml</code> and add the image tag for the production container.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml>---
+<span style=color:#f92672>services</span>:
+  <span style=color:#f92672>lambda-fastapi-prod</span>:
+    <span style=color:#f92672>build</span>:
+      <span style=color:#f92672>context</span>: <span style=color:#ae81ff>.</span>
+      <span style=color:#f92672>dockerfile</span>: <span style=color:#ae81ff>./compose/prod/Dockerfile</span>
+    <span style=color:#f92672>image</span>: <span style=color:#ae81ff>105477761364.</span><span style=color:#ae81ff>dkr.ecr.eu-west-1.amazonaws.com/lambda-fastapi:latest</span>
+    <span style=color:#f92672>container_name</span>: <span style=color:#ae81ff>lambda-fastapi-prod</span>
+    <span style=color:#f92672>ports</span>:
+      - <span style=color:#ae81ff>9000</span>:<span style=color:#ae81ff>8080</span>
+</code></pre></div><p>As you can see, we use the ECR repository name here, attached with a tag <code>:latest</code>. This is just basic Docker tagging and allows for easy version control. You can, of course, change that to whatever suits you.</p>
+<p>Now time to build our container:</p>
+<pre tabindex=0><code>docker-compose up --build
+</code></pre><p>This will build both containers and run them. I hear you thinking now. With my container running in the background;</p>
+<p><em>Would it be possible?</em><br>
+<em>Can I invoke my production container locally?</em></p>
+<p>Yes, you can! 🚀</p>
+<p>To make that work, we need to mimic an AWS API gateway event.</p>
+<pre tabindex=0><code>curl -XPOST &quot;http://localhost:9000/2015-03-31/functions/function/invocations&quot; -d '{
+    &quot;resource&quot;: &quot;/local-testing&quot;,
+    &quot;path&quot;: &quot;/ping&quot;,
+    &quot;httpMethod&quot;: &quot;GET&quot;,
+    &quot;headers&quot;: {
+      &quot;Accept&quot;: &quot;*/*&quot;,
+      &quot;Accept-Encoding&quot;: &quot;gzip, deflate&quot;,
+      &quot;cache-control&quot;: &quot;no-cache&quot;,
+      &quot;CloudFront-Forwarded-Proto&quot;: &quot;https&quot;,
+      &quot;CloudFront-Is-Desktop-Viewer&quot;: &quot;true&quot;,
+      &quot;CloudFront-Is-Mobile-Viewer&quot;: &quot;false&quot;,
+      &quot;CloudFront-Is-SmartTV-Viewer&quot;: &quot;false&quot;,
+      &quot;CloudFront-Is-Tablet-Viewer&quot;: &quot;false&quot;,
+      &quot;CloudFront-Viewer-Country&quot;: &quot;US&quot;,
+      &quot;Content-Type&quot;: &quot;application/json&quot;,
+      &quot;headerName&quot;: &quot;headerValue&quot;,
+      &quot;Host&quot;: &quot;gy415nuibc.execute-api.us-east-1.amazonaws.com&quot;,
+      &quot;Postman-Token&quot;: &quot;9f583ef0-ed83-4a38-aef3-eb9ce3f7a57f&quot;,
+      &quot;User-Agent&quot;: &quot;PostmanRuntime/2.4.5&quot;,
+      &quot;Via&quot;: &quot;1.1 d98420743a69852491bbdea73f7680bd.cloudfront.net (CloudFront)&quot;,
+      &quot;X-Amz-Cf-Id&quot;: &quot;pn-PWIJc6thYnZm5P0NMgOUglL1DYtl0gdeJky8tqsg8iS_sgsKD1A==&quot;,
+      &quot;X-Forwarded-For&quot;: &quot;54.240.196.186, 54.182.214.83&quot;,
+      &quot;X-Forwarded-Port&quot;: &quot;443&quot;,
+      &quot;X-Forwarded-Proto&quot;: &quot;https&quot;
+    },
+    &quot;multiValueHeaders&quot;:{
+      &quot;Accept&quot;:[
+        &quot;*/*&quot;
+      ],
+      &quot;Accept-Encoding&quot;:[
+        &quot;gzip, deflate&quot;
+      ],
+      &quot;cache-control&quot;:[
+        &quot;no-cache&quot;
+      ],
+      &quot;CloudFront-Forwarded-Proto&quot;:[
+        &quot;https&quot;
+      ],
+      &quot;CloudFront-Is-Desktop-Viewer&quot;:[
+        &quot;true&quot;
+      ],
+      &quot;CloudFront-Is-Mobile-Viewer&quot;:[
+        &quot;false&quot;
+      ],
+      &quot;CloudFront-Is-SmartTV-Viewer&quot;:[
+        &quot;false&quot;
+      ],
+      &quot;CloudFront-Is-Tablet-Viewer&quot;:[
+        &quot;false&quot;
+      ],
+      &quot;CloudFront-Viewer-Country&quot;:[
+        &quot;US&quot;
+      ],
+      &quot;&quot;:[
+        &quot;&quot;
+      ],
+      &quot;Content-Type&quot;:[
+        &quot;application/json&quot;
+      ],
+      &quot;headerName&quot;:[
+        &quot;headerValue&quot;
+      ],
+      &quot;Host&quot;:[
+        &quot;gy415nuibc.execute-api.us-east-1.amazonaws.com&quot;
+      ],
+      &quot;Postman-Token&quot;:[
+        &quot;9f583ef0-ed83-4a38-aef3-eb9ce3f7a57f&quot;
+      ],
+      &quot;User-Agent&quot;:[
+        &quot;PostmanRuntime/2.4.5&quot;
+      ],
+      &quot;Via&quot;:[
+        &quot;1.1 d98420743a69852491bbdea73f7680bd.cloudfront.net (CloudFront)&quot;
+      ],
+      &quot;X-Amz-Cf-Id&quot;:[
+        &quot;pn-PWIJc6thYnZm5P0NMgOUglL1DYtl0gdeJky8tqsg8iS_sgsKD1A==&quot;
+      ],
+      &quot;X-Forwarded-For&quot;:[
+        &quot;54.240.196.186, 54.182.214.83&quot;
+      ],
+      &quot;X-Forwarded-Port&quot;:[
+        &quot;443&quot;
+      ],
+      &quot;X-Forwarded-Proto&quot;:[
+        &quot;https&quot;
+      ]
+    },
+    &quot;queryStringParameters&quot;: {
+    },
+    &quot;multiValueQueryStringParameters&quot;:{
+    },
+    &quot;pathParameters&quot;: {
+    },
+    &quot;stageVariables&quot;: {
+      &quot;stageVariableName&quot;: &quot;stageVariableValue&quot;
+    },
+    &quot;requestContext&quot;: {
+      &quot;accountId&quot;: &quot;12345678912&quot;,
+      &quot;resourceId&quot;: &quot;roq9wj&quot;,
+      &quot;stage&quot;: &quot;testStage&quot;,
+      &quot;requestId&quot;: &quot;deef4878-7910-11e6-8f14-25afc3e9ae33&quot;,
+      &quot;identity&quot;: {
+        &quot;cognitoIdentityPoolId&quot;: null,
+        &quot;accountId&quot;: null,
+        &quot;cognitoIdentityId&quot;: null,
+        &quot;caller&quot;: null,
+        &quot;apiKey&quot;: null,
+        &quot;sourceIp&quot;: &quot;192.168.196.186&quot;,
+        &quot;cognitoAuthenticationType&quot;: null,
+        &quot;cognitoAuthenticationProvider&quot;: null,
+        &quot;userArn&quot;: null,
+        &quot;userAgent&quot;: &quot;PostmanRuntime/2.4.5&quot;,
+        &quot;user&quot;: null
+      },
+      &quot;resourcePath&quot;: &quot;/ping&quot;,
+      &quot;httpMethod&quot;: &quot;GET&quot;,
+      &quot;apiId&quot;: &quot;gy415nuibc&quot;
+    },
+    &quot;body&quot;: &quot;{}&quot;,
+    &quot;isBase64Encoded&quot;: false
+}'
+</code></pre><p>Output:</p>
+<pre tabindex=0><code>{&quot;isBase64Encoded&quot;: false, &quot;statusCode&quot;: 200, &quot;headers&quot;: {&quot;content-length&quot;: &quot;19&quot;, &quot;content-type&quot;: &quot;application/json&quot;}, &quot;body&quot;: &quot;{\&quot;Success\&quot;:\&quot;Pong!\&quot;}&quot;}%
+</code></pre><p>That&rsquo;s absolutely insane! 🔥 We can invoke our Lambda function locally, just as how it would run on AWS itself.</p>
+<p>The only things you need to adjust in the event are the <code>httpMethod</code> and the <code>path</code> and <code>resourcePath</code>. You can test every event locally, even <code>POST</code> and <code>PUT</code> requests, by adding a <code>body</code> to it.</p>
+<p>The potential of this is huge, because you can easily incorporate integration tests for your Lambda functions now. After all, it runs against the actual Lambda runtime. No more mocking! 👌</p>
+<h2 id=deploying-our-lambda-container>Deploying our Lambda container</h2>
+<p>Next up, is deploying our container image. Let&rsquo;s first start with pushing our locally build image to ECR.</p>
+<pre tabindex=0><code>docker push 105477761364.dkr.ecr.eu-west-1.amazonaws.com/lambda-fastapi:latest
+</code></pre><p>Here you would obviously, use the same url as how you tagged your image and build it. We get our output back:</p>
+<pre tabindex=0><code>latest: digest: sha256:23ea6742e439757b0d331f08c461b0146bd1a6e0796f7dd388ae86abadf54c19 size: 2413
+</code></pre><p>Note the digest output, we will use it in our serverless configuration to deploy our Lambda.</p>
+<p>With our FastAPI lambda container deployed on ECR, let&rsquo;s create our <code>serverless.yml</code> file and deploy the API gateway that we will use to invoke our Lambda.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=color:#f92672>service</span>: <span style=color:#ae81ff>lambda-fastapi</span>
+
+<span style=color:#f92672>frameworkVersion</span>: <span style=color:#e6db74>&#34;2&#34;</span>
+
+<span style=color:#f92672>provider</span>:
+  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>aws</span>
+  <span style=color:#f92672>stage</span>: <span style=color:#ae81ff>${opt:stage}</span>
+  <span style=color:#f92672>region</span>: <span style=color:#ae81ff>eu-west-1</span>
+  <span style=color:#f92672>lambdaHashingVersion</span>: <span style=color:#ae81ff>20201221</span>
+  <span style=color:#f92672>memorySize</span>: <span style=color:#ae81ff>256</span>
+  <span style=color:#f92672>timeout</span>: <span style=color:#ae81ff>30</span>
+  <span style=color:#f92672>apiName</span>: <span style=color:#ae81ff>${self:service}-${opt:stage}</span>
+  <span style=color:#f92672>apiGateway</span>:
+    <span style=color:#f92672>description</span>: <span style=color:#ae81ff>REST API ${self:service}</span>
+    <span style=color:#f92672>metrics</span>: <span style=color:#66d9ef>true</span>
+
+<span style=color:#f92672>functions</span>: <span style=color:#ae81ff>${file(functions.yml):functions}</span>
+</code></pre></div><p>Now add the function in <code>functions.yml</code>. Take a good look at the image URL we use here, it follows the following format: <code>&lt;your-ecr-repo>@&lt;your-digest></code>.</p>
+<p>Use the digest output here that you noted earlier after the ECR push.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=color:#f92672>functions</span>:
+  <span style=color:#f92672>myAwesomeFastAPIFunction</span>:
+    <span style=color:#f92672>image</span>: <span style=color:#ae81ff>105477761364.</span><span style=color:#ae81ff>dkr.ecr.eu-west-1.amazonaws.com/lambda-fastapi@sha256:23ea6742e439757b0d331f08c461b0146bd1a6e0796f7dd388ae86abadf54c19</span>
+    <span style=color:#f92672>events</span>:
+      - <span style=color:#f92672>http</span>:
+          <span style=color:#f92672>path</span>: <span style=color:#ae81ff>ping/</span>
+          <span style=color:#f92672>method</span>: <span style=color:#ae81ff>get</span>
+          <span style=color:#f92672>cors</span>: <span style=color:#66d9ef>true</span>
+</code></pre></div><p>Time to deploy our Lambda! 🚀</p>
+<pre tabindex=0><code>serverless deploy --stage dev
+</code></pre><p>Output:</p>
+<pre tabindex=0><code>Service Information
+service: lambda-fastapi
+stage: dev
+region: eu-west-1
+stack: lambda-fastapi-dev
+resources: 12
+api keys:
+  None
+endpoints:
+  GET - https://119dyojuza.execute-api.eu-west-1.amazonaws.com/dev/ping
+functions:
+  lambda-fastapi: lambda-fastapi-dev-myAwesomeFastAPIFunction
+layers:
+  None
+</code></pre><p>Visit your endpoint and see the result!</p>
+<pre tabindex=0><code>{&quot;Success&quot;:&quot;Pong!&quot;}
+</code></pre><h2 id=extending-the-api>Extending the API</h2>
+<p>Alright, that&rsquo;s very cool what we just did, but you might want a little more than just a <code>/ping</code> endpoint. So let&rsquo;s extend our API and truly see the power of Mangum + FastAPI, handling internal routing within a single Lambda container image. 📈</p>
+<p>Add the following files to your <code>src</code> folder:</p>
+<pre tabindex=0><code>src
+  api_v1/
+    users/
+      users.py
+    api.py
+  main.py
+</code></pre><p>As you can see, we can really structure our app very well, by using FastAPI&rsquo;s nested routing. This makes our app look clean and keeps our code separated. You could make multiple modules for different parts of your API.</p>
+<p>In our <code>api.py</code> file, add the following code:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> fastapi <span style=color:#f92672>import</span> APIRouter
+
+<span style=color:#f92672>from</span> .users <span style=color:#f92672>import</span> users
+
+router <span style=color:#f92672>=</span> APIRouter()
+
+router<span style=color:#f92672>.</span>include_router(users<span style=color:#f92672>.</span>router, prefix<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;/users&#34;</span>, tags<span style=color:#f92672>=</span>[<span style=color:#e6db74>&#34;Users&#34;</span>])
+</code></pre></div><p>Then within our <code>users.py</code> file, add the following routes:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> fastapi <span style=color:#f92672>import</span> APIRouter
+
+router <span style=color:#f92672>=</span> APIRouter()
+
+
+<span style=color:#a6e22e>@router</span><span style=color:#f92672>.</span>get(<span style=color:#e6db74>&#34;/</span><span style=color:#e6db74>{id}</span><span style=color:#e6db74>&#34;</span>)
+<span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>get_user</span>():
+    results <span style=color:#f92672>=</span> {<span style=color:#e6db74>&#34;Success&#34;</span>: <span style=color:#e6db74>&#34;This is one user!&#34;</span>}
+    <span style=color:#66d9ef>return</span> results
+
+
+<span style=color:#a6e22e>@router</span><span style=color:#f92672>.</span>get(<span style=color:#e6db74>&#34;/&#34;</span>)
+<span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>get_users</span>():
+    results <span style=color:#f92672>=</span> {<span style=color:#e6db74>&#34;Success&#34;</span>: <span style=color:#e6db74>&#34;All users!&#34;</span>}
+    <span style=color:#66d9ef>return</span> results
+</code></pre></div><p>And finally, the last step is adding our new router app to our <code>main.py</code> file which is our Lambda handler as you remember.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> fastapi <span style=color:#f92672>import</span> FastAPI
+<span style=color:#f92672>from</span> mangum <span style=color:#f92672>import</span> Mangum
+<span style=color:#f92672>from</span> api_v1.api <span style=color:#f92672>import</span> router <span style=color:#66d9ef>as</span> api_router
+
+app <span style=color:#f92672>=</span> FastAPI(
+    title<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;My Awesome FastAPI app&#34;</span>,
+    description<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;This is super fancy, with auto docs and everything!&#34;</span>,
+    version<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;0.1.0&#34;</span>,
+)
+
+
+<span style=color:#a6e22e>@app</span><span style=color:#f92672>.</span>get(<span style=color:#e6db74>&#34;/ping&#34;</span>, name<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;Healthcheck&#34;</span>, tags<span style=color:#f92672>=</span>[<span style=color:#e6db74>&#34;Healthcheck&#34;</span>])
+<span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>healthcheck</span>():
+    <span style=color:#66d9ef>return</span> {<span style=color:#e6db74>&#34;Success&#34;</span>: <span style=color:#e6db74>&#34;Pong!&#34;</span>}
+
+app<span style=color:#f92672>.</span>include_router(api_router, prefix<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;/api/v1&#34;</span>)
+
+handler <span style=color:#f92672>=</span> Mangum(app)
+</code></pre></div><p>Assuming your development server is still running (this is the beauty of FastAPI development), visit <code>localhost:8000/api/v1/users</code>. It works! Awesome. 🔥</p>
+<p>Also, check out <code>/docs</code> to see our newly updated interactive docs:</p>
+<p><img src=https://vonsopanen.github.io/images/blog/8/fastapi-docs.png alt="FastAPI autodocs"></p>
+<p>As you can see, our new endpoint is working. Note the prefix we use here <code>/api/v1</code>.</p>
+<p>It&rsquo;s always good practice to version your APIs. When your app grows, you might plan on releasing a new API with breaking changes for your end-user. By versioning it, you could just start developing in a new folder <code>api_v2</code> and create a new prefix <code>/api/v2</code> for it. This will give your users time to switch over while slowly deprecating your old API.</p>
+<h4 id=rebuild-the-container>Rebuild the container</h4>
+<p>Time to rebuild our container, since our code changed. 🚧</p>
+<pre tabindex=0><code>docker-compose build --no-cache lambda-fastapi-prod
+</code></pre><p>Now push the new version to ECR, note the digest output again so we can reference that in our <code>serverless</code> file.</p>
+<pre tabindex=0><code>docker push 105477061364.dkr.ecr.eu-west-1.amazonaws.com/lambda-fastapi:latest
+</code></pre><h4 id=adding-new-routes>Adding new routes</h4>
+<p>With our new container on ECR, add the endpoints to our <code>functions.yml</code> file:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=color:#f92672>functions</span>:
+  <span style=color:#f92672>myAwesomeFastAPIFunction</span>:
+    <span style=color:#f92672>image</span>: <span style=color:#ae81ff>105477761364.</span><span style=color:#ae81ff>dkr.ecr.eu-west-1.amazonaws.com/lambda-fastapi@sha256:cc85e1e3b0a862115deee4f151e981c79d5b453fb0645099c6e86a29deeea0e0</span>
+    <span style=color:#f92672>events</span>:
+      - <span style=color:#f92672>http</span>:
+          <span style=color:#f92672>path</span>: <span style=color:#ae81ff>ping/</span>
+          <span style=color:#f92672>method</span>: <span style=color:#ae81ff>get</span>
+          <span style=color:#f92672>cors</span>: <span style=color:#66d9ef>true</span>
+      - <span style=color:#f92672>http</span>:
+          <span style=color:#f92672>path</span>: <span style=color:#ae81ff>api/v1/users/</span>
+          <span style=color:#f92672>method</span>: <span style=color:#ae81ff>any</span>
+          <span style=color:#f92672>cors</span>: <span style=color:#66d9ef>true</span>
+      - <span style=color:#f92672>http</span>:
+          <span style=color:#f92672>path</span>: <span style=color:#ae81ff>api/v1/users/{id}</span>
+          <span style=color:#f92672>method</span>: <span style=color:#ae81ff>any</span>
+          <span style=color:#f92672>cors</span>: <span style=color:#66d9ef>true</span>
+</code></pre></div><p>Make sure you change the digest of your image as well, to the latest one that you just deployed. These kinds of things can of course be automated, making deployment even quicker, but that&rsquo;s not the point of this blog post. You can be creative yourself with that. 😝</p>
+<p>Also, something to note, the serverless framework itself does offer a functionality where it will build your Docker container for you, basically not having to paste the new digest for the image or push it to ECR yourself. However, this is quite buggy and I didn&rsquo;t get it to work for me.</p>
+<p>This also means that each time you might just want to change an API gateway route, it will rebuild the full container and pushes it to ECR, when that&rsquo;s not needed sometimes. So I prefer to do it this way! Feel free to do whatever works for you of course.</p>
+<p>Time to deploy! 🚀</p>
+<pre tabindex=0><code>serverless deploy --stage dev
+</code></pre><p>Output:</p>
+<pre tabindex=0><code>Service Information
+service: lambda-fastapi
+stage: dev
+region: eu-west-1
+stack: lambda-fastapi-dev
+resources: 20
+api keys:
+  None
+endpoints:
+  GET - https://119dyojuza.execute-api.eu-west-1.amazonaws.com/dev/ping
+  ANY - https://119dyojuza.execute-api.eu-west-1.amazonaws.com/dev/api/v1/users
+  ANY - https://119dyojuza.execute-api.eu-west-1.amazonaws.com/dev/api/v1/users/{id}
+functions:
+  lambda-fastapi: lambda-fastapi-dev-myAwesomeFastAPIFunction
+layers:
+  None
+</code></pre><p>Now visit the <code>users</code> endpoint first. As you can see, we get our response back that we specified: <code>{"Success":"All users!"}</code></p>
+<p>Now let&rsquo;s try our dynamic endpoint by visiting e.g. <code>users/1</code>. Our return will be: <code>{"Success":"This is one user!"}</code>.</p>
+<p>Awesome! As you can see our FastAPI is working perfectly and all internal routing is properly handled.</p>
+<h2 id=conclusion->Conclusion ⚡</h2>
+<p>Alright so in this blog post we deployed a FastAPI lambda function on AWS as a container image.</p>
+<p>We registered our image on ECR, added multiple internal routes and we deployed it through serverless. Now it&rsquo;s up to you to, of course, to implement the logic behind these API routes. But now you know <em>how</em> to set it up.</p>
+<p>I hope you learned enough by now to create container image Lambda APIs on AWS. In the future, I will definitely post some more about it. Maybe integrating our API with various other AWS services like e.g. DynamoDB.</p>
+<p>See you next time! 👋</p>
+</div>
+</article>
+<hr>
+<div class=post-info>
+<p>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83.0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7" y2="7"/></svg><span class=tag><a href=https://vonsopanen.github.io/tags/aws/>aws</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/serverless/>serverless</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/fastapi/>fastapi</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/docker/>docker</a></span>
+</p>
+<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+2793 Words
+</p>
+<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+2021-02-21 14:07 +0000
+</p>
+</div>
+<div class=pagination>
+<div class=pagination__title>
+<span class=pagination__title-h></span>
+<hr>
+</div>
+<div class=pagination__buttons>
+<span class="button next">
+<a href=https://vonsopanen.github.io/posts/using-traefik-as-ingress-controller-on-a-kubernetes-cluster-with-cert-manager-part-2/>
+<span class=button__text>Using Traefik as Ingress Controller on a Kubernetes cluster with cert-manager | Part 2</span>
+<span class=button__icon>→</span>
+</a>
+</span>
+</div>
+</div>
+<div id=comments>
+<div id=disqus_thread></div>
+<script type=application/javascript>var disqus_config=function(){};(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('disqus_thread').innerHTML='Disqus comments not available by default when the website is previewed locally.';return}var b=document,a=b.createElement('script');a.async=!0,a.src='//rafrasenberg-com.disqus.com/embed.js',a.setAttribute('data-timestamp',+new Date),(b.head||b.body).appendChild(a)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+<a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a>
+</div>
+</main>
+</div>
+<footer class=footer>
+<div class=footer__inner>
+<div class=footer__content>
+<span>© 2020</span>
+<a href=https://vonsopanen.github.io/><span>Raf Rasenberg</span></a>
+</div>
+</div>
+</footer>
+</div>
+<script type=text/javascript src=https://vonsopanen.github.io/bundle.min.a0f363fdf81cdc5cfacc447a79c33189eb000d090336cd04aac8ee256f423b3133b836c281944c19c75e38d0b0b449f01ce5807e37798b7ac94ac1db51983fc4.js integrity="sha512-oPNj/fgc3Fz6zER6ecMxiesADQkDNs0EqsjuJW9COzEzuDbCgZRMGcdeONCwtEnwHOWAfjd5i3rJSsHbUZg/xA=="></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-177931139-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-177931139-1')</script>
+<script>(function(c,e,f,h,b,d){c.MailerLiteObject=b;function a(){var b={a:arguments,q:[]},c=this.push(b);return"number"!=typeof c?c:a.bind(b.q)}a.q=a.q||[],c[b]=c[b]||a.bind(a.q),c[b].q=c[b].q||a.q,d=e.createElement(f);var g=e.getElementsByTagName(f)[0];d.async=1,d.src=h+'?v'+~~((new Date).getTime()/1e6),g.parentNode.insertBefore(d,g)})(window,document,'script','https://static.mailerlite.com/js/universal.js','ml');var ml_account=ml('accounts','2387594','n2l1g5f0i1','load')</script>
+</body>
+</html>

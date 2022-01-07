@@ -1,0 +1,665 @@
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="ie=edge">
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=author content="Raf Rasenberg ">
+<meta name=description content="Digital Ocean managed Kubernetes through Terraform. Paired with Traefik v2 as the Ingress Controller and cert-manager as the provider for free Let's Encrypts certificates!">
+<meta name=keywords content=",kubernetes,terraform,server,cloud,dev-ops">
+<meta name=robots content="noodp">
+<meta name=theme-color content="#d58432">
+<link rel=canonical href=https://vonsopanen.github.io/posts/kubernetes-with-terraform-traefik-v2-cert-manager-part-1/>
+<title>
+Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1
+</title>
+<link href=https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.2.1/css/flag-icon.min.css rel=stylesheet type=text/css>
+<link rel=stylesheet href=https://vonsopanen.github.io/main.491d9de14a60a99da243398aa5873cb28a058c58cb30eb698c56e003d11d6aab.css>
+<meta itemprop=name content="Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1">
+<meta itemprop=description content="Digital Ocean managed Kubernetes through Terraform. Paired with Traefik v2 as the Ingress Controller and cert-manager as the provider for free Let's Encrypts certificates!"><meta itemprop=datePublished content="2020-11-21T06:28:07+01:00">
+<meta itemprop=dateModified content="2020-11-21T06:28:07+01:00">
+<meta itemprop=wordCount content="2834"><meta itemprop=image content="https://vonsopanen.github.io/images/blog/6/header-image.png">
+<meta itemprop=keywords content="kubernetes,terraform,server,cloud,dev-ops,">
+<meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://vonsopanen.github.io/images/blog/6/header-image.png">
+<meta name=twitter:title content="Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1">
+<meta name=twitter:description content="Digital Ocean managed Kubernetes through Terraform. Paired with Traefik v2 as the Ingress Controller and cert-manager as the provider for free Let's Encrypts certificates!">
+<meta property="article:published_time" content="2020-11-21 06:28:07 +0100 +0100">
+</head>
+<body class=dark-theme>
+<div class=container>
+<header class=header>
+<span class=header__inner>
+<a href=https://vonsopanen.github.io/ style=text-decoration:none>
+<div class=logo>
+<span class=logo__mark>></span>
+<span class=logo__text>$ cd /home/</span>
+<span class=logo__cursor>
+</span>
+</div>
+</a>
+<span class=header__right>
+<nav class=menu>
+<ul class=menu__inner><li><a href=https://vonsopanen.github.io/about/>About</a></li><li><a href=https://vonsopanen.github.io/posts/>Posts</a></li>
+</ul>
+</nav>
+<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+</span>
+<span class="theme-toggle unselectable"><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg>
+</span>
+</span>
+</span>
+</header>
+<div class=content>
+<main class=post>
+<div class=post-info>
+<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+14 minutes
+</p>
+</div>
+<article>
+<h1 class=post-title>
+<a href=https://vonsopanen.github.io/posts/kubernetes-with-terraform-traefik-v2-cert-manager-part-1/>Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1</a>
+</h1>
+<div class=post-content>
+<h2 id=introduction->Introduction 📌</h2>
+<p>Today we are setting up a managed Kubernetes cluster & load balancer on DigitalOcean using Terraform. Our cluster will be powered with Traefik v2 as our Ingress controller <strong>and</strong> cert-manager to provide us with free Let&rsquo;s Encrypt certificates.</p>
+<p>Woaw. That&rsquo;s a mouth full. Well don&rsquo;t worry, it sounds more difficult than it actually is!</p>
+<p>In this part, we&rsquo;ll go over the Kubernetes set-up first, and then in Part 2 we will do the deployments. 👏</p>
+<blockquote>
+<p>Article experience level: <strong>Intermediate</strong></p>
+</blockquote>
+<p>I categorize every article based on complexity. It&rsquo;s a good way to indicate how well you can follow along with the article since it determines how deep I will explain certain concepts.</p>
+<p><strong>Prerequisites</strong></p>
+<ul>
+<li>Terraform > 0.13 installed</li>
+<li>Digital Ocean account</li>
+</ul>
+<p>👉 <a href=https://github.com/rafrasenberg/kubernetes-terraform-traefik-cert-manager>The Github repo for this blog post</a></p>
+<h2 id=infrastructure-as-code-iac->Infrastructure as Code (IaC) 🚧</h2>
+<p>Back in the day, managing IT infrastructure was a tough job. Sysadmins had to manually configure and manage all the hardware and software that was needed for applications to run.</p>
+<p>In recent years, this has changed. Cloud computing has vastly improved and it changed the way organizations design, develop, and maintain their IT infrastructure.</p>
+<h4 id=what-is-iac>What is IaC?</h4>
+<p><em>IaC according to Wikipedia:</em></p>
+<p>Infrastructure as code is the process of managing and provisioning computer data centers through machine-readable definition files, rather than physical hardware configuration or interactive configuration tools.</p>
+<p>A little complex and full of buzzwords, so let&rsquo;s rewrite that into something short and understandable:</p>
+<blockquote>
+<p>Infrastructure as code (IaC) means to manage your IT infrastructure using configuration files.</p>
+</blockquote>
+<p>Before IaC, IT personnel would have to manually change configurations to manage their infrastructure. With IaC, your infrastructure’s configuration takes the form of a code file.</p>
+<p>Since it’s just text, it’s easy for you to edit, copy, and distribute it. You can <strong>and should</strong> put it under source control, like any other source code file.</p>
+<p><img src=https://vonsopanen.github.io/images/blog/6/infrastructure-as-code.png alt="Infastructure as Code"></p>
+<p><a href=https://www.softobiz.com/infrastructure-as-code-an-essential-devops-practice/>Image source</a></p>
+<p>The benefits of Infrastructure as Code are:</p>
+<ul>
+<li>Faster development</li>
+<li>More consistency</li>
+<li>Accountability</li>
+<li>Higher efficiency</li>
+<li>Lower costs</li>
+</ul>
+<p>In this blog post, we will use the famous IaC tool, Terraform. So let&rsquo;s start! 🚀</p>
+<h2 id=choosing-the-cloud-provider->Choosing the cloud provider 🐟</h2>
+<p>For this blog post, we are picking a managed Kubernetes cluster on Digital Ocean, since it is perfect to just start out and explore Kubernetes.</p>
+<p>It&rsquo;s a cheaper alternative than AWS EKS since launching a managed cluster + load balancer will only cost you around ~$30 per month whereas AWS EKS will set you back at least $75 per month ($0.10 / hour). And this excludes the Load Balancer, NAT gateway etc.</p>
+<p>So for just hacking around, I prefer Digital Ocean as it is an easy and inexpensive way to get started. But for critical production environments, I would not advise using Digital Ocean because compared to AWS EKS it doesn&rsquo;t really compete when looking at flexibility, scalability, and maturity.</p>
+<p>You don&rsquo;t want to pay? I get it! If you sign up <a href=https://m.do.co/c/52031fcadf3c>through this link</a>, you will get $100 worth of credit for free. Which means 3 full months of free Kubernetes! ❤️</p>
+<h2 id=iac-with-terraform>IaC with Terraform</h2>
+<p>From this point on I am going to assume you have Terraform > 0.13 installed and you have set-up your Digital Ocean account.</p>
+<h4 id=what-is-terraform>What is Terraform?</h4>
+<p>Terraform is a tool for building, changing, and versioning infrastructure safely and efficiently. Terraform can manage existing, popular service providers as well as custom solutions. ✅</p>
+<p>The infrastructure Terraform can manage includes low-level components such as compute instances, storage, and networking, as well as high-level components such as DNS entries, SaaS features, etc.</p>
+<h2 id=getting-started-with-terraform>Getting started with Terraform</h2>
+<p>Alright, so the first thing we are going to do is prepare our workspace. Let&rsquo;s create a folder and <code>cd</code> into it.</p>
+<pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ mkdir do-k8-config &amp;&amp; cd do-k8-config
+</code></pre><p>The first file we are going to create is <code>01-backend.tf</code>. This will basically hold the main configuration files and will tell us which version of Terraform to use and which providers to use.</p>
+<p>A provider is responsible for understanding API interactions and exposing resources. Most providers configure a specific infrastructure platform (either cloud or self-hosted).</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-hcl data-lang=hcl><span style=color:#66d9ef>terraform</span> {
+  required_version <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;~&gt; 0.13.5&#34;</span>
+  <span style=color:#66d9ef>required_providers</span> {
+    digitalocean <span style=color:#f92672>=</span> {
+      source  <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;digitalocean/digitalocean&#34;</span>
+      version <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;~&gt; 2.0.2&#34;</span>
+    }
+  }
+}
+</code></pre></div><p>Next up is creating the <code>terraform.tfvars</code> file. This will hold all the variables of the infrastructure. Terraform automatically loads the variables in this file when running the <code>terraform apply</code> command, without needing the specify the <code>-var-file="foo.tfvars"</code> flag.</p>
+<p>Best practices when working with larger codebases would be to split this variable file into several variable files each corresponding to a certain part of your configuration. But for the simplicity of this blog post, we will store all of it in one file.</p>
+<p>The first variable we need to specify is the API token of Digital Ocean. This is needed so Terraform can communicate through the Digital Ocean provider.</p>
+<p>To get the Digital Ocean API token, log in, and find your account settings. Generate one if you hadn&rsquo;t already. Then replace the variable below with your token.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-hcl data-lang=hcl><span style=color:#75715e># 1 Backend variables
+</span><span style=color:#75715e></span>do_token                              <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;478a6caadc70293857235kshdglkjshasgklasg7cb643525asdgcd1&#34;</span>
+
+</code></pre></div><p>Now we create the <code>provider.tf</code> file.</p>
+<p>Terraform configurations must declare which providers they require so that Terraform can install and use them. Additionally, some providers require configuration (like endpoint URLs or cloud regions) before they can be used.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-hcl data-lang=hcl><span style=color:#75715e># Register the DO token
+</span><span style=color:#75715e></span><span style=color:#66d9ef>variable</span> <span style=color:#e6db74>&#34;do_token&#34;</span> {
+  type        <span style=color:#f92672>=</span> <span style=color:#66d9ef>string</span>
+  description <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Digital Ocean token.&#34;</span>
+}<span style=color:#75715e>
+</span><span style=color:#75715e>
+</span><span style=color:#75715e># Configure the DigitalOcean Provider
+</span><span style=color:#75715e></span><span style=color:#66d9ef>provider</span> <span style=color:#e6db74>&#34;digitalocean&#34;</span> {
+  token <span style=color:#f92672>=</span> <span style=color:#66d9ef>var</span>.<span style=color:#66d9ef>do_token</span>
+}
+</code></pre></div><p>Your current folder structure should look like this right now:</p>
+<pre tabindex=0><code class=language-sh-session data-lang=sh-session>.
+└── do-k8-config/
+    ├── 01-backend.tf
+    ├── provider.tf
+    └── terraform.tfvars
+</code></pre><h2 id=configuring-the-cluster>Configuring the cluster</h2>
+<p>Next up is our cluster configuration. Create a file and name it <code>02-cluster.tf</code>. In there we first declare the variables that we are going to use. Some variables that we are declaring here are the cluster name, the region and the node size.</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-hcl data-lang=hcl><span style=color:#75715e># Variable declaration
+</span><span style=color:#75715e></span><span style=color:#66d9ef>variable</span> <span style=color:#e6db74>&#34;cluster_name&#34;</span> {
+  type        <span style=color:#f92672>=</span> <span style=color:#66d9ef>string</span>
+  description <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Cluster name that will be created.&#34;</span>
+}
+<span style=color:#66d9ef>variable</span> <span style=color:#e6db74>&#34;cluster_region&#34;</span> {
+  type        <span style=color:#f92672>=</span> <span style=color:#66d9ef>string</span>
+  description <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Cluster region.&#34;</span>
+}
+<span style=color:#66d9ef>variable</span> <span style=color:#e6db74>&#34;cluster_tags&#34;</span> {
+  type        <span style=color:#f92672>=</span> <span style=color:#66d9ef>list</span>(<span style=color:#66d9ef>string</span>)
+  description <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Cluster tags.&#34;</span>
+}
+<span style=color:#66d9ef>variable</span> <span style=color:#e6db74>&#34;node_size&#34;</span> {
+  type        <span style=color:#f92672>=</span> <span style=color:#66d9ef>string</span>
+  description <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;The size of the nodes in the cluster.&#34;</span>
+}
+<span style=color:#66d9ef>variable</span> <span style=color:#e6db74>&#34;node_max_count&#34;</span> {
+  type        <span style=color:#f92672>=</span> <span style=color:#66d9ef>number</span>
+  description <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Maximum amount of nodes in the cluster.&#34;</span>
+}
+<span style=color:#66d9ef>variable</span> <span style=color:#e6db74>&#34;node_min_count&#34;</span> {
+  type        <span style=color:#f92672>=</span> <span style=color:#66d9ef>number</span>
+  description <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Minimum amount of nodes in the cluster.&#34;</span>
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>Next up is the actual cluster configuration and the connection to the Kubernetes and Helm (the package manager) providers.</p>
+<p>If you really want to dive more into Terraform configuration, I highly suggest to check out the docs of each provider, since it is too much to go over all the config settings here in this blog. The docs are really good!</p>
+<ul>
+<li><a href=https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs>Digital Ocean Provider Docs</a></li>
+<li><a href=https://registry.terraform.io/providers/hashicorp/helm/latest/docs>Helm Provider Docs</a></li>
+<li><a href=https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs>Kubernetes Provider Docs</a></li>
+</ul>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">54
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">55
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">56
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">57
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">58
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">59
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">60
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">61
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">62
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">63
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">64
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">65
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">66
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">67
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">68
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">69
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">70
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">71
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-hcl data-lang=hcl><span style=color:#75715e># Enable auto upgrade patch versions
+</span><span style=color:#75715e></span><span style=color:#66d9ef>data</span> <span style=color:#e6db74>&#34;digitalocean_kubernetes_versions&#34; &#34;do_cluster_version&#34;</span> {
+  version_prefix <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;1.19.&#34;</span>
+}<span style=color:#75715e>
+</span><span style=color:#75715e>
+</span><span style=color:#75715e># Create the cluster with autoscaling on
+</span><span style=color:#75715e></span><span style=color:#66d9ef>resource</span> <span style=color:#e6db74>&#34;digitalocean_kubernetes_cluster&#34; &#34;do_cluster&#34;</span> {
+  name         <span style=color:#f92672>=</span> <span style=color:#66d9ef>var</span>.<span style=color:#66d9ef>cluster_name</span>
+  region       <span style=color:#f92672>=</span> <span style=color:#66d9ef>var</span>.<span style=color:#66d9ef>cluster_region</span>
+  auto_upgrade <span style=color:#f92672>=</span> <span style=color:#66d9ef>true</span>
+  version      <span style=color:#f92672>=</span> <span style=color:#66d9ef>data</span>.<span style=color:#66d9ef>digitalocean_kubernetes_versions</span>.<span style=color:#66d9ef>do_cluster_version</span>.<span style=color:#66d9ef>latest_version</span>
+  tags         <span style=color:#f92672>=</span> <span style=color:#66d9ef>var</span>.<span style=color:#66d9ef>cluster_tags</span>
+
+  <span style=color:#66d9ef>node_pool</span> {
+    name       <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;${var.cluster_name}-pool&#34;</span>
+    size       <span style=color:#f92672>=</span> <span style=color:#66d9ef>var</span>.<span style=color:#66d9ef>node_size</span>
+    min_nodes  <span style=color:#f92672>=</span> <span style=color:#66d9ef>var</span>.<span style=color:#66d9ef>node_min_count</span>
+    max_nodes  <span style=color:#f92672>=</span> <span style=color:#66d9ef>var</span>.<span style=color:#66d9ef>node_max_count</span>
+    auto_scale <span style=color:#f92672>=</span> <span style=color:#66d9ef>true</span>
+  }
+}<span style=color:#75715e>
+</span><span style=color:#75715e>
+</span><span style=color:#75715e># Load and connect to Kubernetes
+</span><span style=color:#75715e></span><span style=color:#66d9ef>provider</span> <span style=color:#e6db74>&#34;kubernetes&#34;</span> {
+  version          <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;~&gt; 1.13.3&#34;</span>
+  load_config_file <span style=color:#f92672>=</span> <span style=color:#66d9ef>false</span>
+  host             <span style=color:#f92672>=</span> <span style=color:#66d9ef>digitalocean_kubernetes_cluster</span>.<span style=color:#66d9ef>do_cluster</span>.<span style=color:#66d9ef>endpoint</span>
+  token            <span style=color:#f92672>=</span> <span style=color:#66d9ef>digitalocean_kubernetes_cluster</span>.<span style=color:#66d9ef>do_cluster</span>.<span style=color:#66d9ef>kube_config</span>[<span style=color:#ae81ff>0</span>].<span style=color:#66d9ef>token</span>
+  cluster_ca_certificate <span style=color:#f92672>=</span> <span style=color:#66d9ef>base64decode</span>(
+    <span style=color:#66d9ef>digitalocean_kubernetes_cluster</span>.<span style=color:#66d9ef>do_cluster</span>.<span style=color:#66d9ef>kube_config</span>[<span style=color:#ae81ff>0</span>].<span style=color:#66d9ef>cluster_ca_certificate</span>
+  )
+}<span style=color:#75715e>
+</span><span style=color:#75715e>
+</span><span style=color:#75715e># Load and connect to Helm
+</span><span style=color:#75715e></span><span style=color:#66d9ef>provider</span> <span style=color:#e6db74>&#34;helm&#34;</span> {
+  <span style=color:#66d9ef>kubernetes</span> {
+    load_config_file <span style=color:#f92672>=</span> <span style=color:#66d9ef>false</span>
+    host             <span style=color:#f92672>=</span> <span style=color:#66d9ef>digitalocean_kubernetes_cluster</span>.<span style=color:#66d9ef>do_cluster</span>.<span style=color:#66d9ef>endpoint</span>
+    token            <span style=color:#f92672>=</span> <span style=color:#66d9ef>digitalocean_kubernetes_cluster</span>.<span style=color:#66d9ef>do_cluster</span>.<span style=color:#66d9ef>kube_config</span>[<span style=color:#ae81ff>0</span>].<span style=color:#66d9ef>token</span>
+    cluster_ca_certificate <span style=color:#f92672>=</span> <span style=color:#66d9ef>base64decode</span>(
+      <span style=color:#66d9ef>digitalocean_kubernetes_cluster</span>.<span style=color:#66d9ef>do_cluster</span>.<span style=color:#66d9ef>kube_config</span>[<span style=color:#ae81ff>0</span>].<span style=color:#66d9ef>cluster_ca_certificate</span>
+    )
+  }
+  version <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;~&gt; 1.3.2&#34;</span>
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>Next up is updating our <code>terraform.tfvars</code> file to include the new variables. Specify here things like the region where you want to launch your cluster and the node size. We will be using Digital Ocean&rsquo;s autoscaling feature, so therefore we are specifying the max and min node count as well.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-hcl data-lang=hcl><span style=color:#75715e># 1 Backend variables
+</span><span style=color:#75715e></span>do_token                              <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;478a6caadc70293857235kshdglkjshasgklasg7cb643525asdgcd1&#34;</span><span style=color:#75715e>
+</span><span style=color:#75715e>
+</span><span style=color:#75715e># 2 Cluster variables
+</span><span style=color:#75715e></span>cluster_name                          <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;my-special-cluster-name&#34;</span>
+cluster_region                        <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;ams3&#34;</span>
+cluster_tags                          <span style=color:#f92672>=</span> [<span style=color:#e6db74>&#34;foo&#34;, &#34;development&#34;</span>]
+node_size                             <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;s-1vcpu-2gb&#34;</span>
+node_min_count                        <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span>
+node_max_count                        <span style=color:#f92672>=</span> <span style=color:#ae81ff>4</span>
+</code></pre></div><h2 id=read-set-launch->Read, set.. LAUNCH! 🚀</h2>
+<p>Before we can deploy our cluster, we will need to run the <code>terraform init</code> command.</p>
+<p>This will initialize our Terraform workspace. It is used to initialize a working directory containing Terraform configuration files. This is the first command that should be run after writing a new Terraform configuration or cloning an existing one from version control.</p>
+<pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ terraform init
+</code></pre><p>As you can see now, a new folder called <code>.terraform</code> is formed, holding the configuration files. Next up is planning our execution plan with the <code>terraform plan</code> command.</p>
+<p>The <code>terraform plan</code> command is used to create an execution plan. Terraform performs a refresh, unless explicitly disabled, and then determines what actions are necessary to achieve the desired state specified in the configuration files.</p>
+<p>This command is a convenient way to check whether the execution plan for a set of changes matches your expectations without making any changes to real resources or to the state.</p>
+<p>The optional <code>-out</code> argument can be used to save the generated plan to a file for later execution with terraform apply, which can be useful when running Terraform in automation.</p>
+<p>If Terraform detects no changes to the resource or the root module output values, the Terraform plan will indicate that no changes are required.</p>
+<p>So let&rsquo;s create our execution plan! ⚡</p>
+<pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ terraform plan -out=terraform.tfplan
+</code></pre><p>If this lead to no errors then everything went well! 😄 You can always check your terminal output so see which changes Terraform is going to apply.</p>
+<p>We can now officially deploy our cluster by applying our <code>terraform.tfplan</code> with the following command:</p>
+<pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ terraform apply &quot;terraform.tfplan&quot;
+</code></pre><p>This will take some minutes to finish. When logging in to Digital Ocean, you can see your cluster will now be up and running. AWESOME!</p>
+<p><img src=https://vonsopanen.github.io/images/blog/6/digital-ocean-kubernetes-cluster.png alt="Digital Ocean Kubernetes Cluster"></p>
+<p><strong>NOTE:</strong></p>
+<p>The state is now stored locally in <code>terraform.tfstate</code>. When working with Terraform in a team, use of a local file makes Terraform usage complicated because each user must make sure they always have the latest state data before running Terraform and make sure that nobody else runs Terraform at the same time.</p>
+<p>In that case, it is better to store this state remote by using remote state. Terraform writes the state data to a remote data store, which can then be shared between all members of a team. So for best practices when working with production code and a team, use remote state. To keep this tutorial a little shorter I am using the default local <code>terraform.tfstate</code></p>
+<h2 id=adding-traefik-v2-as-ingress-controller>Adding Traefik v2 as Ingress controller</h2>
+<p>Alright with our Kubernetes cluster launched right now, let&rsquo;s add Traefik as our Ingress controller.</p>
+<p>Ingress exposes HTTP and HTTPS routes from outside the cluster to services within the cluster. Traffic routing is controlled by rules defined on the Ingress resource.</p>
+<p>We will be installing Traefik v2 through the official Helm repository. Helm is a Kubernetes package manager and helps you easily define, install, and upgrade even the most complex Kubernetes applications.</p>
+<p>To make Digital Ocean Kubernetes work with the Traefik Helm repository, we need some custom configuration. Create a folder called <code>helm-values</code> and within that folder create a file called <code>traefik.yml</code>.</p>
+<pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ mkdir helm-values &amp;&amp; cd helm-values &amp;&amp; touch traefik.yml
+</code></pre><p>In this <code>traefik.yml</code> file add the following configuration below. This will make sure everything will work properly with <code>cert-manager</code>, which we will configure later on. It also enables the dashboard and will automatically redirect all traffic to TLS.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=color:#f92672>ingressRoute</span>:
+  <span style=color:#f92672>dashboard</span>:
+    <span style=color:#f92672>enabled</span>: <span style=color:#66d9ef>true</span>
+    <span style=color:#f92672>annotations</span>: { <span style=color:#f92672>traefik.ingress.kubernetes.io/router.tls</span>: <span style=color:#e6db74>&#34;true&#34;</span> }
+
+<span style=color:#f92672>ports</span>:
+  <span style=color:#f92672>web</span>:
+    <span style=color:#f92672>redirectTo</span>: <span style=color:#ae81ff>websecure</span>
+
+<span style=color:#f92672>additionalArguments</span>:
+  - <span style=color:#e6db74>&#34;--log.level=INFO&#34;</span>
+  - <span style=color:#e6db74>&#34;--entrypoints.websecure.http.tls&#34;</span>
+  - <span style=color:#e6db74>&#34;--providers.kubernetesIngress.ingressClass=traefik-cert-manager&#34;</span>
+  - <span style=color:#e6db74>&#34;--ping&#34;</span>
+  - <span style=color:#e6db74>&#34;--metrics.prometheus&#34;</span>
+</code></pre></div><p>Now it is time to configure our Terraform files. Create a file called <code>03-ingress.tf</code>. Like in our previous Terraform files, first declare the variables that we will need:</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-hcl data-lang=hcl><span style=color:#75715e># Variable declaration
+</span><span style=color:#75715e></span><span style=color:#66d9ef>variable</span> <span style=color:#e6db74>&#34;ingress_gateway_chart_name&#34;</span> {
+  type        <span style=color:#f92672>=</span> <span style=color:#66d9ef>string</span>
+  description <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Ingress Gateway Helm chart name.&#34;</span>
+}
+<span style=color:#66d9ef>variable</span> <span style=color:#e6db74>&#34;ingress_gateway_chart_repo&#34;</span> {
+  type        <span style=color:#f92672>=</span> <span style=color:#66d9ef>string</span>
+  description <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Ingress Gateway Helm repository name.&#34;</span>
+}
+<span style=color:#66d9ef>variable</span> <span style=color:#e6db74>&#34;ingress_gateway_chart_version&#34;</span> {
+  type        <span style=color:#f92672>=</span> <span style=color:#66d9ef>string</span>
+  description <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Ingress Gateway Helm repository version.&#34;</span>
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>In the following section, we will first create a Kubernetes namespace for our Traefik service and then deploy it through Helm. As you can see in here we also specify the custom <code>traefik.yml</code> config that we created earlier.</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-hcl data-lang=hcl><span style=color:#75715e># Create Traefik namespace
+</span><span style=color:#75715e></span><span style=color:#66d9ef>resource</span> <span style=color:#e6db74>&#34;kubernetes_namespace&#34; &#34;ingress_gateway_namespace&#34;</span> {
+  <span style=color:#66d9ef>metadata</span> {
+    annotations <span style=color:#f92672>=</span> {
+      name <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;traefik&#34;</span>
+    }
+    name <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;traefik&#34;</span>
+  }
+}<span style=color:#75715e>
+</span><span style=color:#75715e>
+</span><span style=color:#75715e># Deploy Ingress Controller Traefik
+</span><span style=color:#75715e></span><span style=color:#66d9ef>resource</span> <span style=color:#e6db74>&#34;helm_release&#34; &#34;ingress_gateway&#34;</span> {
+  name      <span style=color:#f92672>=</span> <span style=color:#66d9ef>var</span>.<span style=color:#66d9ef>ingress_gateway_chart_name</span>
+  chart     <span style=color:#f92672>=</span> <span style=color:#66d9ef>var</span>.<span style=color:#66d9ef>ingress_gateway_chart_repo</span>
+  namespace <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;traefik&#34;</span>
+
+  values <span style=color:#f92672>=</span> [
+    <span style=color:#66d9ef>file</span>(<span style=color:#e6db74>&#34;helm-values/traefik.yml&#34;</span>)
+  ]
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>At last, we need to update our <code>terraform.tfvars</code> again to enter the new variables.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-hcl data-lang=hcl><span style=color:#75715e># 1 Backend variables
+</span><span style=color:#75715e></span>do_token                              <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;478a6caadc70293857235kshdglkjshasgklasg7cb643525asdgcd1&#34;</span><span style=color:#75715e>
+</span><span style=color:#75715e>
+</span><span style=color:#75715e># 2 Cluster variables
+</span><span style=color:#75715e></span>cluster_name                          <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;my-special-cluster-name&#34;</span>
+cluster_region                        <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;ams3&#34;</span>
+cluster_tags                          <span style=color:#f92672>=</span> [<span style=color:#e6db74>&#34;foo&#34;, &#34;development&#34;</span>]
+node_size                             <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;s-1vcpu-2gb&#34;</span>
+node_min_count                        <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span>
+node_max_count                        <span style=color:#f92672>=</span> <span style=color:#ae81ff>4</span><span style=color:#75715e>
+</span><span style=color:#75715e>
+</span><span style=color:#75715e># 3 Ingress variables
+</span><span style=color:#75715e></span>ingress_gateway_chart_name            <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;traefik&#34;</span>
+ingress_gateway_chart_repo            <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;https://helm.traefik.io/traefik&#34;</span>
+ingress_gateway_chart_version         <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;9.8.3&#34;</span>
+</code></pre></div><p>Now it&rsquo;s time to create our execution plan and deploy our new Ingress controller to our Kubernetes cluster! As a sanity check, this is what your current folder structure should look like:</p>
+<pre tabindex=0><code class=language-sh-session data-lang=sh-session>.
+└── do-k8-config/
+    ├── .terraform/
+    ├── helm-values/
+    │   └── traefik.yml
+    ├── 01-backend.tf
+    ├── 02-cluster.tf
+    ├── 03-ingress.tf
+    ├── provider.tf
+    ├── terraform.tfstate
+    ├── terraform.tfplan
+    └── terraform.tfvars
+</code></pre><p>Alright with that out of the way, let&rsquo;s create our new plan:</p>
+<pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ terraform plan -out=terraform.tfplan
+</code></pre><p>If everything went well, it&rsquo;s time to deploy it!</p>
+<pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ terraform apply &quot;terraform.tfplan&quot;
+</code></pre><p>Hoorah, Traefik is deployed!! 🚀</p>
+<p>If you check your Digital Ocean dashboard right now and go to the Networking menu, and then the Load Balancers. You&rsquo;ll see a shiny fresh new load balancer there. I hear you thinking, huh? But we didn&rsquo;t deploy that?</p>
+<p><img src=https://vonsopanen.github.io/images/blog/6/digital-ocean-load-balancer.png alt="Digital Ocean Load Balancer"></p>
+<p>This is the result of using the managed service by Digital Ocean. Whenever a Kubernetes service is declared as type LoadBalancer:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Service</span>
+<span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>v1</span>
+<span style=color:#f92672>spec</span>:
+  <span style=color:#f92672>type</span>: <span style=color:#ae81ff>LoadBalancer</span>
+</code></pre></div><p>Then Digital Ocean automatically triggers the creation of that load balancer when you deploy the service. To read more about load balancing on Digital Ocean Kubernetes, <a href=https://www.digitalocean.com/docs/kubernetes/how-to/configure-load-balancers/>follow this link.</a></p>
+<h2 id=installing-cert-manager>Installing cert-manager</h2>
+<p>The last Terraform configuration that we have to do is that of <code>cert-manager</code>.</p>
+<p>Cert-manager builds on top of Kubernetes, introducing certificate authorities and certificates as first-class resource types in the Kubernetes API. This makes it possible to provide &lsquo;certificates as a service&rsquo; to developers working within your Kubernetes cluster.</p>
+<p>Let&rsquo;s create a new file called <code>04-cert-manager.tf</code>. Like we did before, first declare the variables:</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-hcl data-lang=hcl><span style=color:#75715e># Variable declaration
+</span><span style=color:#75715e></span><span style=color:#66d9ef>variable</span> <span style=color:#e6db74>&#34;cert_manager_chart_name&#34;</span> {
+  type        <span style=color:#f92672>=</span> <span style=color:#66d9ef>string</span>
+  description <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Cert Manager Helm name.&#34;</span>
+}
+<span style=color:#66d9ef>variable</span> <span style=color:#e6db74>&#34;cert_manager_chart_repo&#34;</span> {
+  type        <span style=color:#f92672>=</span> <span style=color:#66d9ef>string</span>
+  description <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Cert Manager Helm repository name.&#34;</span>
+}
+<span style=color:#66d9ef>variable</span> <span style=color:#e6db74>&#34;cert_manager_chart_version&#34;</span> {
+  type        <span style=color:#f92672>=</span> <span style=color:#66d9ef>string</span>
+  description <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Cert Manager Helm version.&#34;</span>
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>Then we create a new namespace for <code>cert-manager</code> within Kubernetes and we deploy it through Helm.</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-hcl data-lang=hcl><span style=color:#75715e># Create cert manager namespace
+</span><span style=color:#75715e></span><span style=color:#66d9ef>resource</span> <span style=color:#e6db74>&#34;kubernetes_namespace&#34; &#34;cert_manager_namespace&#34;</span> {
+  <span style=color:#66d9ef>metadata</span> {
+    annotations <span style=color:#f92672>=</span> {
+      name <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;cert-manager&#34;</span>
+    }
+    name <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;cert-manager&#34;</span>
+  }
+}<span style=color:#75715e>
+</span><span style=color:#75715e>
+</span><span style=color:#75715e># Install helm release Cert Manager
+</span><span style=color:#75715e></span><span style=color:#66d9ef>resource</span> <span style=color:#e6db74>&#34;helm_release&#34; &#34;cert-manager&#34;</span> {
+  name       <span style=color:#f92672>=</span> <span style=color:#66d9ef>var</span>.<span style=color:#66d9ef>cert_manager_chart_name</span>
+  chart      <span style=color:#f92672>=</span> <span style=color:#66d9ef>var</span>.<span style=color:#66d9ef>cert_manager_chart_name</span>
+  repository <span style=color:#f92672>=</span> <span style=color:#66d9ef>var</span>.<span style=color:#66d9ef>cert_manager_chart_repo</span>
+  version    <span style=color:#f92672>=</span> <span style=color:#66d9ef>var</span>.<span style=color:#66d9ef>cert_manager_chart_version</span>
+  namespace  <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;cert-manager&#34;</span>
+
+  <span style=color:#66d9ef>set</span> {
+    name  <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;installCRDs&#34;</span>
+    value <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;true&#34;</span>
+  }
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>Then we need to update our <code>terraform.tfvars</code> again to enter the new variables.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-hcl data-lang=hcl><span style=color:#75715e># 1 Backend variables
+</span><span style=color:#75715e></span>do_token                              <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;478a6caadc70293857235kshdglkjshasgklasg7cb643525asdgcd1&#34;</span><span style=color:#75715e>
+</span><span style=color:#75715e>
+</span><span style=color:#75715e># 2 Cluster variables
+</span><span style=color:#75715e></span>cluster_name                          <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;my-special-cluster-name&#34;</span>
+cluster_region                        <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;ams3&#34;</span>
+cluster_tags                          <span style=color:#f92672>=</span> [<span style=color:#e6db74>&#34;foo&#34;, &#34;development&#34;</span>]
+node_size                             <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;s-1vcpu-2gb&#34;</span>
+node_min_count                        <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span>
+node_max_count                        <span style=color:#f92672>=</span> <span style=color:#ae81ff>4</span><span style=color:#75715e>
+</span><span style=color:#75715e>
+</span><span style=color:#75715e># 3 Ingress variables
+</span><span style=color:#75715e></span>ingress_gateway_chart_name            <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;traefik&#34;</span>
+ingress_gateway_chart_repo            <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;https://helm.traefik.io/traefik&#34;</span>
+ingress_gateway_chart_version         <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;9.8.3&#34;</span><span style=color:#75715e>
+</span><span style=color:#75715e>
+</span><span style=color:#75715e># 4 Cert manager variables
+</span><span style=color:#75715e></span>cert_manager_chart_name               <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;cert-manager&#34;</span>
+cert_manager_chart_repo               <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;https://charts.jetstack.io&#34;</span>
+cert_manager_chart_version            <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;1.0.4&#34;</span>
+</code></pre></div><p>And at last, you guessed it right, create our execution plan again!</p>
+<pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ terraform plan -out=terraform.tfplan
+</code></pre><p>Now let&rsquo;s deploy cert-manager.</p>
+<pre tabindex=0><code class=language-sh-session data-lang=sh-session>$ terraform apply &quot;terraform.tfplan&quot;
+</code></pre><p>Your Kubernetes cluster is now up and running with Traefik v2 as the Ingress Controller and cert-manager installed, ready to generate free Let&rsquo;s Encrypt certificates for the domains you will later point to your cluster.</p>
+<h2 id=conclusion->Conclusion ⚡</h2>
+<p>Alright so we have our Kubernetes cluster up and running and Traefik and cert-manager are installed. Now in Part 2 of this blog, we will configure cert-manager so we will be able to issue free Let&rsquo;s Encrypt certificates.</p>
+<p>We will then expose the Traefik dashboard to the internet and deploy a simple example app as well, both running behind the Digital Ocean load balancer and fully TLS encrypted. Exciting!</p>
+<p>For Part 2, <a href=https://rafrasenberg.com/posts/using-traefik-as-ingress-controller-on-a-kubernetes-cluster-with-cert-manager-part-2/>follow this link.</a></p>
+<p><strong>Sources used for this post</strong>:</p>
+<ul>
+<li><a href=https://www.terraform.io/docs/index.html>Terraform Docs</a></li>
+<li><a href=https://stackify.com/what-is-infrastructure-as-code-how-it-works-best-practices-tutorials/>Stackify Article</a></li>
+</ul>
+</div>
+</article>
+<hr>
+<div class=post-info>
+<p>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83.0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7" y2="7"/></svg><span class=tag><a href=https://vonsopanen.github.io/tags/kubernetes/>kubernetes</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/terraform/>terraform</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/server/>server</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/cloud/>cloud</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/dev-ops/>dev-ops</a></span>
+</p>
+<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+2834 Words
+</p>
+<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+2020-11-21 05:28 +0000
+</p>
+</div>
+<div class=pagination>
+<div class=pagination__title>
+<span class=pagination__title-h></span>
+<hr>
+</div>
+<div class=pagination__buttons>
+<span class="button previous">
+<a href=https://vonsopanen.github.io/posts/using-traefik-as-ingress-controller-on-a-kubernetes-cluster-with-cert-manager-part-2/>
+<span class=button__icon>←</span>
+<span class=button__text>Using Traefik as Ingress Controller on a Kubernetes cluster with cert-manager | Part 2</span>
+</a>
+</span>
+<span class="button next">
+<a href=https://vonsopanen.github.io/posts/ubuntu-20.04-basic-server-set-up-beginner-tutorial/>
+<span class=button__text>Ubuntu 20.04 basic server set-up (beginner tutorial)</span>
+<span class=button__icon>→</span>
+</a>
+</span>
+</div>
+</div>
+<div id=comments>
+<div id=disqus_thread></div>
+<script type=application/javascript>var disqus_config=function(){};(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('disqus_thread').innerHTML='Disqus comments not available by default when the website is previewed locally.';return}var b=document,a=b.createElement('script');a.async=!0,a.src='//rafrasenberg-com.disqus.com/embed.js',a.setAttribute('data-timestamp',+new Date),(b.head||b.body).appendChild(a)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+<a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a>
+</div>
+</main>
+</div>
+<footer class=footer>
+<div class=footer__inner>
+<div class=footer__content>
+<span>© 2020</span>
+<a href=https://vonsopanen.github.io/><span>Raf Rasenberg</span></a>
+</div>
+</div>
+</footer>
+</div>
+<script type=text/javascript src=https://vonsopanen.github.io/bundle.min.a0f363fdf81cdc5cfacc447a79c33189eb000d090336cd04aac8ee256f423b3133b836c281944c19c75e38d0b0b449f01ce5807e37798b7ac94ac1db51983fc4.js integrity="sha512-oPNj/fgc3Fz6zER6ecMxiesADQkDNs0EqsjuJW9COzEzuDbCgZRMGcdeONCwtEnwHOWAfjd5i3rJSsHbUZg/xA=="></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-177931139-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-177931139-1')</script>
+<script>(function(c,e,f,h,b,d){c.MailerLiteObject=b;function a(){var b={a:arguments,q:[]},c=this.push(b);return"number"!=typeof c?c:a.bind(b.q)}a.q=a.q||[],c[b]=c[b]||a.bind(a.q),c[b].q=c[b].q||a.q,d=e.createElement(f);var g=e.getElementsByTagName(f)[0];d.async=1,d.src=h+'?v'+~~((new Date).getTime()/1e6),g.parentNode.insertBefore(d,g)})(window,document,'script','https://static.mailerlite.com/js/universal.js','ml');var ml_account=ml('accounts','2387594','n2l1g5f0i1','load')</script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="ie=edge">
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=author content="Raf Rasenberg ">
+<meta name=description content="In this blog we will set-up a basic Ubuntu 20.04 server using a Digital Ocean droplet.">
+<meta name=keywords content=",server,cloud">
+<meta name=robots content="noodp">
+<meta name=theme-color content="#d58432">
+<link rel=canonical href=https://vonsopanen.github.io/posts/ubuntu-20.04-basic-server-set-up-beginner-tutorial/>
+<title>
+Ubuntu 20.04 basic server set-up (beginner tutorial)
+</title>
+<link href=https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.2.1/css/flag-icon.min.css rel=stylesheet type=text/css>
+<link rel=stylesheet href=https://vonsopanen.github.io/main.491d9de14a60a99da243398aa5873cb28a058c58cb30eb698c56e003d11d6aab.css>
+<meta itemprop=name content="Ubuntu 20.04 basic server set-up (beginner tutorial)">
+<meta itemprop=description content="In this blog we will set-up a basic Ubuntu 20.04 server using a Digital Ocean droplet."><meta itemprop=datePublished content="2020-09-27T12:24:15+02:00">
+<meta itemprop=dateModified content="2020-09-27T12:24:15+02:00">
+<meta itemprop=wordCount content="1876"><meta itemprop=image content="https://vonsopanen.github.io/images/blog/3/header.png">
+<meta itemprop=keywords content="server,cloud,">
+<meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://vonsopanen.github.io/images/blog/3/header.png">
+<meta name=twitter:title content="Ubuntu 20.04 basic server set-up (beginner tutorial)">
+<meta name=twitter:description content="In this blog we will set-up a basic Ubuntu 20.04 server using a Digital Ocean droplet.">
+<meta property="article:published_time" content="2020-09-27 12:24:15 +0200 +0200">
+</head>
+<body class=dark-theme>
+<div class=container>
+<header class=header>
+<span class=header__inner>
+<a href=https://vonsopanen.github.io/ style=text-decoration:none>
+<div class=logo>
+<span class=logo__mark>></span>
+<span class=logo__text>$ cd /home/</span>
+<span class=logo__cursor>
+</span>
+</div>
+</a>
+<span class=header__right>
+<nav class=menu>
+<ul class=menu__inner><li><a href=https://vonsopanen.github.io/about/>About</a></li><li><a href=https://vonsopanen.github.io/posts/>Posts</a></li>
+</ul>
+</nav>
+<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+</span>
+<span class="theme-toggle unselectable"><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg>
+</span>
+</span>
+</span>
+</header>
+<div class=content>
+<main class=post>
+<div class=post-info>
+<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+9 minutes
+</p>
+</div>
+<article>
+<h1 class=post-title>
+<a href=https://vonsopanen.github.io/posts/ubuntu-20.04-basic-server-set-up-beginner-tutorial/>Ubuntu 20.04 basic server set-up (beginner tutorial)</a>
+</h1>
+<div class=post-content>
+<h2 id=introduction->Introduction 👇</h2>
+<p>In two previous blog posts, we explored the ease of deploying serverless functions. These are obviously a great way of removing the hassle of maintaining a server and most of the times also reducing the running costs.</p>
+<p>However besides the whole <strong>&ldquo;serverless hype&rdquo;</strong> we are seeing right now in the tech world, a lot of projects still require a traditional cloud VM.</p>
+<p>You might need more flexiblity, your app doesn&rsquo;t work well on a serverless set-up or it just doesn&rsquo;t fit your usecase. Luckily for us non-cool folks going <em>server</em> instead of <em>serverless</em> is just as easy! 😄</p>
+<p>So let&rsquo;s go over that in this blog post!</p>
+<p><strong>Note:</strong> To follow this tutorial I assume you have a terminal available. This can be on your Linux machine, Mac OS or Windows Linux Subsystem.</p>
+<h2 id=1-what-are-the-options->1. What are the options ❓</h2>
+<p>There are multiple cloud providers available that offer virtual cloud machines. Some of the most wide known:</p>
+<ul>
+<li>Digital Ocean</li>
+<li>AWS EC2</li>
+<li>Vultr</li>
+<li>Linode</li>
+<li>Kamatera</li>
+</ul>
+<p>In this post we will use my personal favourite: Digital Ocean! ❤️</p>
+<p>Besides being one of my favourite cloud providers, you also get $100 worth of credit for free if you sign up through <a href=https://m.do.co/c/52031fcadf3c>this referral link</a>. Can&rsquo;t get any better than that right?</p>
+<p>Exactly, that&rsquo;s what I thought. So let&rsquo;s start! 🔥</p>
+<h2 id=2-setting-up-ssh-keys-on-your-machine->2. Setting up SSH keys on your machine 🔑</h2>
+<p>Secure Shell (better known as SSH) is a <strong>cryptographic network protocol</strong> which allows users to securely perform a number of network services over an unsecured network.</p>
+<p>SSH keys provide a more secure way of logging into a server with SSH than using a password alone. While a password can eventually be cracked with a brute force attack, SSH keys are nearly impossible to decipher by brute force alone.</p>
+<p>Generating a key pair provides you with two long string of characters: <strong>a public and a private key</strong>. You can place the public key on any server, and then unlock it by connecting to it with a client that already has the private key.</p>
+<p>When the two match up, the system unlocks. 🔓</p>
+<h4 id=i-create-rsa-key-pair>I. Create RSA key pair</h4>
+<p>So the first step is creating a key pair on our development machine with the following command:</p>
+<pre tabindex=0><code>$ ssh-keygen -t rsa
+</code></pre><p>The terminal prompt will ask you to set a password for the key. Make sure to <strong>always set a password!</strong> If you don&rsquo;t and someone could get unauthorized access to your machine, they could just copy your private key to their own machine and log in to all your servers. So make sure to password protect your key. 🔐</p>
+<p>The output will be similar to this:</p>
+<pre tabindex=0><code>Generating public/private rsa key pair.
+Enter file in which to save the key (/home/raf/.ssh/id_rsa):
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /home/raf/.ssh/id_rsa.
+Your public key has been saved in /home/raf/.ssh/id_rsa.pub.
+The key fingerprint is:
+4a:dd:0a:c6:35:4e:3f:ed:27:38:8c:74:44:4d:93:67 raf@a
+The key's randomart image is:
++--[ RSA 2048]----+
+|          .oo.   |
+|         .  o.E  |
+|        + .  o   |
+|     . = = .     |
+|      = S = .    |
+|     o + = +     |
+|      . o + o .  |
+|           . o   |
+|                 |
++-----------------+
+</code></pre><p>The public key is now located in <code>/home/raf/.ssh/id_rsa.pub</code>. The private key (identification) is now located in <code>/home/raf/.ssh/id_rsa</code>.</p>
+<h2 id=3-adding-the-key-to-our-digital-ocean-account--launching-the-droplet->3. Adding the key to our Digital Ocean account & launching the droplet 📁</h2>
+<p>Next up is adding our new key to our Digital Ocean account through their GUI. The benefit of this is that whenever you spin up a droplet, it will automatically copy the key to the new server! Saving you from doing that manually, which makes life easier.</p>
+<p>The first thing we have to do is getting our public key. We can do that by running the following command:</p>
+<pre tabindex=0><code>$ cat ~/.ssh/id_rsa.pub
+</code></pre><p>The output in your terminal should be a long string of characters. Similar to the one below here. Copy your public key.</p>
+<pre tabindex=0><code>ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC/aOIJUaUUiZP0KA4vslD97oNVzVYZAiZTTG2Z3ozis3pnt3ZKL5k/XvdOCyfb449BjsShiQim7h1+/m/HEQNVggOqQpWigMf+Ky+zHbQm9mAy+/PpIYMfbWI29nuBnljA9yPcTAdKQM15KNobWeawz0vxoxrncX88sadfasl3j23SFKGUuFpVHXfd4P4njisXrR8vRh07EoU5xafjXrBPYAIsc1vHpK8SpTvwZFc8NwVq2VoQ2s0ig3Fw0gLTgj7roaDEfCW0KZ6SBkAZEmCsFxTnQF8NDiafupNo9ic09xLijvwwasdlkasdfasl2an3fK4twqRcZuZQiRFIppb3kMFQmVWCXW1Udi2ph79TyEXKvmtEnynY+s9SYcGdDbYnbMKqHCrfD4D2JKWXZmuxt7QkFFGTWJeDTPKynmhfuihqQ84LxIK2Gi8sPhRdcs15Kw5A5ctpz+aqd3WUJl78dyvakIcoTNHG06zxR2X7hpz+8U2DQmort4/Dtb5XO9myE5POevdasCroPHxEslzZShHw6dSztC48j7LJ80mSYhI46Vfk5jiH2gT8IHF3JhxytNxBYwTClBYq0c2+M7o62vCVKRCoKFMomCsfME1TmwnJWOMWfnFqMXwBmanUEqJFldEOSg66+egZ5Ym1gSIdww== rafrasenberg@Rafs-MacBook-Pro.local
+</code></pre><p>Now <a href=https://m.do.co/c/52031fcadf3c>sign up for Digital Ocean</a> and set-up your account.</p>
+<p>After you have logged into the dashboard, head over to your <strong><em>Settings</em></strong> and click the tab <strong><em>Security</em></strong>. After that click on <strong><em>Add SSH key</em></strong>. This will open up a modal where you can paste the public key in. Make sure to save it.</p>
+<p><img src=https://vonsopanen.github.io/images/blog/3/image1.png alt="Digital Ocean dashboard"></p>
+<p>After that click on the button in the top right corner <strong><em>Create</em></strong> and from the dropdown choose <strong><em>Droplet</em></strong>.</p>
+<p>DigitalOcean Droplets are Linux-based virtual machines (VMs) that run on top of virtualized hardware. Each Droplet you create is a new server you can use, either standalone or as part of a larger, cloud-based infrastructure.</p>
+<p>When adding your droplet, make sure you choose Ubuntu 20.04 as the image and pick the standard $5 plan. When scrolling down make sure you select your SSH key as well, that you previously added in your account and give your server a cool hostname! 🆒</p>
+<p>View the GIF below to see the full walkthrough.</p>
+<p><img src=https://vonsopanen.github.io/images/blog/3/gif1.gif alt="Creating Digital Ocean droplet"></p>
+<h2 id=4-logging-in-to-our-server->4. Logging in to our server 🚀</h2>
+<p>Alright we have already come far haven&rsquo;t we? Now it is time for the real work!</p>
+<p>If everything went well you should see a droplet instance in your Digital Ocean dashboard with the hostname you chose and the IP address that belongs to the droplet. Copy this IP address and fire up a terminal session and run the following command (replace the IP address with yours):</p>
+<pre tabindex=0><code>$ ssh root@167.23.10.37
+</code></pre><p>It should ask for a password. This is the password that you set-up for your SSH key in step 2. Accept the warning about host authenticity if it appears. You should now be logged in as the root user on your very own cloud server. How cool is that! 🎉</p>
+<p><strong>Note:</strong> Root is the superuser account in Unix and Linux. It is a user account for administrative purposes, and typically has the highest access rights on the system.</p>
+<h2 id=5-basic-server-set-up->5. Basic server set-up 💻</h2>
+<p>When you first create a new Ubuntu 20.04 server, you should perform some important configuration steps as part of the basic setup. These steps will increase the security and usability of your server, and will give you a solid foundation for subsequent actions.</p>
+<h4 id=i-setting-up-a-basic-firewall>I. Setting up a basic firewall</h4>
+<p>Ubuntu 20.04 servers can use the UFW firewall to make sure only connections to certain services are allowed. We can set up a basic firewall very easily using this application.</p>
+<p>Applications can register their profiles with UFW upon installation. These profiles allow UFW to manage these applications by name. OpenSSH, the service allowing us to connect to our server now, has a profile registered with UFW.</p>
+<p>Before we enable the firewall, make sure that OpenSSH is added to our firewall configuration. Otherwise we won&rsquo;t be able to log back in. Run the following command:</p>
+<pre tabindex=0><code>$ ufw allow OpenSSH
+</code></pre><p>Now enable our firewall on start-up:</p>
+<pre tabindex=0><code>$ ufw enable
+</code></pre><p>If you check the status of our firewall now with the below command, it should be up and running.</p>
+<pre tabindex=0><code>$ ufw status
+</code></pre><p>Currently the firewall is blocking all connections except for SSH, if you install and configure additional services, you will need to adjust the firewall settings to allow traffic in.</p>
+<p>Small example: Let&rsquo;s say you want to run a webserver and you want to expose your website to the outside world through SSL. You would need to open up port 443 in order to serve the website, because currently the firewall is blocking all connections. That is as easy as running:</p>
+<pre tabindex=0><code>$ ufw allow 443
+</code></pre><p>Make sure to always reload the firewall afterwards for the changes to apply. You can do this by running:</p>
+<pre tabindex=0><code>$ ufw reload
+</code></pre><h4 id=ii-changing-the-default-ssh-port>II. Changing the default SSH port</h4>
+<p>By default, SSH runs on port 22. To prevent automated bots and malicious users from brute-forcing to your server, we can change the port to something else.</p>
+<p>An intelligent attacker would still scan your server to determine open ports and services running on them. However, changing the default SSH port will block thousands of automated attacks that don’t have time to rotate ports when targeting a Linux Server. 😁</p>
+<p>You can choose any available port you like, in this example we will use <code>Port 3467</code>. So the first thing we do is making sure our firewall allows this port. As you probably know by now, this can be done with:</p>
+<pre tabindex=0><code>$ ufw allow 3467
+</code></pre><p>and then reload the firewall with:</p>
+<pre tabindex=0><code>$ ufw reload
+</code></pre><p>Now we need to make an adjustment to our SSH config file and tell it to use our newly chosen port. You can do that by running the below command:</p>
+<pre tabindex=0><code>$ nano /etc/ssh/sshd_config
+</code></pre><p>Search for the line that says <code>#Port 22</code>:</p>
+<pre tabindex=0><code>#Port 22
+#AddressFamily any
+#ListenAddress 0.0.0.0
+#ListenAddress ::
+
+#HostKey /etc/ssh/ssh_host_rsa_key
+#HostKey /etc/ssh/ssh_host_ecdsa_key
+#HostKey /etc/ssh/ssh_host_ed25519_key
+</code></pre><p>Uncomment it and change it to <code>Port 3467</code>. Now save the file by using <code>ctrl + x</code> and then type <code>y</code> to save and exit.</p>
+<p>The last thing that we have to do is make sure that we restart the SSH service to apply our new changes. You can do that with the following command:</p>
+<pre tabindex=0><code>$ systemctl restart sshd.service
+</code></pre><blockquote>
+<p><strong>IMPORTANT:</strong>
+Whenever you make changes like this <strong>ALWAYS</strong> double check if you can get back into the server first, before you close your terminal session ❗</p>
+</blockquote>
+<p>So let&rsquo;s see if we can log back into our server through the new port. When you try the following:</p>
+<pre tabindex=0><code>$ ssh root@167.23.10.37
+</code></pre><p>This will result in a host rejection. It&rsquo;s because the <code>ssh</code> command defaults to <code>Port 22</code>, however we obviously changed that and therefore it isn&rsquo;t in use anymore. What we have to do then is specifically set the port in our login command. You can do that like so:</p>
+<pre tabindex=0><code>$ ssh root@167.23.10.37 -p 3467
+</code></pre><p>If everything went well, you just logged in through the new port. Now it is safe to close your other terminal session.</p>
+<h4 id=iii-disabling-password-authentication>III. Disabling password authentication</h4>
+<p>A common practice after you have set-up the server for SSH key access, is disabling the password authentication option. This makes sure only connections with a pair of SSH keys are allowed.</p>
+<p>Fortunately for us, Digital Ocean already took care of that because we specified our SSH key at the initalization of the droplet. However if you use a different cloud provider, always make sure to disable that. You can do that in the SSH config file.</p>
+<h4 id=iv-more-security-practices>IV. More security practices</h4>
+<p>There is a lot more to cover, but the steps we discussed in this blog is the bare minimum what I would recommend when setting up a server. The next obvious step is creating a regular user for daily use.</p>
+<p>Security wise, you can take it further by improving your Firewall, setting up services like Fail2Ban, disabling direct root login, etc. I won&rsquo;t bore you with all of that here 💤, but feel free to check out the web for more information about this.</p>
+<h2 id=conclusion->Conclusion ⚡</h2>
+<p>Alright, we took a small dive into the world of server configuration.</p>
+<p>In the next blog post we will go over the things that you need in order to actually serve a webapp on your server. We will also integrate a basic CI pipeline that connects with our droplet that will automatically deploy our changes after pushing it to Github. So stay tuned for that!</p>
+<p>See you next time! 👋</p>
+</div>
+</article>
+<hr>
+<div class=post-info>
+<p>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83.0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7" y2="7"/></svg><span class=tag><a href=https://vonsopanen.github.io/tags/server/>server</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/cloud/>cloud</a></span>
+</p>
+<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+1876 Words
+</p>
+<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+2020-09-27 10:24 +0000
+</p>
+</div>
+<div class=pagination>
+<div class=pagination__title>
+<span class=pagination__title-h></span>
+<hr>
+</div>
+<div class=pagination__buttons>
+<span class="button previous">
+<a href=https://vonsopanen.github.io/posts/kubernetes-with-terraform-traefik-v2-cert-manager-part-1/>
+<span class=button__icon>←</span>
+<span class=button__text>Kubernetes with Terraform & Traefik V2 + cert-manager | Part 1</span>
+</a>
+</span>
+<span class="button next">
+<a href=https://vonsopanen.github.io/posts/deploying-a-serverless-microservice-with-flask-zappa/>
+<span class=button__text>Deploying a serverless microservice with Flask & Zappa</span>
+<span class=button__icon>→</span>
+</a>
+</span>
+</div>
+</div>
+<div id=comments>
+<div id=disqus_thread></div>
+<script type=application/javascript>var disqus_config=function(){};(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('disqus_thread').innerHTML='Disqus comments not available by default when the website is previewed locally.';return}var b=document,a=b.createElement('script');a.async=!0,a.src='//rafrasenberg-com.disqus.com/embed.js',a.setAttribute('data-timestamp',+new Date),(b.head||b.body).appendChild(a)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+<a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a>
+</div>
+</main>
+</div>
+<footer class=footer>
+<div class=footer__inner>
+<div class=footer__content>
+<span>© 2020</span>
+<a href=https://vonsopanen.github.io/><span>Raf Rasenberg</span></a>
+</div>
+</div>
+</footer>
+</div>
+<script type=text/javascript src=https://vonsopanen.github.io/bundle.min.a0f363fdf81cdc5cfacc447a79c33189eb000d090336cd04aac8ee256f423b3133b836c281944c19c75e38d0b0b449f01ce5807e37798b7ac94ac1db51983fc4.js integrity="sha512-oPNj/fgc3Fz6zER6ecMxiesADQkDNs0EqsjuJW9COzEzuDbCgZRMGcdeONCwtEnwHOWAfjd5i3rJSsHbUZg/xA=="></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-177931139-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-177931139-1')</script>
+<script>(function(c,e,f,h,b,d){c.MailerLiteObject=b;function a(){var b={a:arguments,q:[]},c=this.push(b);return"number"!=typeof c?c:a.bind(b.q)}a.q=a.q||[],c[b]=c[b]||a.bind(a.q),c[b].q=c[b].q||a.q,d=e.createElement(f);var g=e.getElementsByTagName(f)[0];d.async=1,d.src=h+'?v'+~~((new Date).getTime()/1e6),g.parentNode.insertBefore(d,g)})(window,document,'script','https://static.mailerlite.com/js/universal.js','ml');var ml_account=ml('accounts','2387594','n2l1g5f0i1','load')</script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="ie=edge">
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=author content="Raf Rasenberg ">
+<meta name=description content="In this blog we will take a look at Zappa and deploy a serverless microservice using Flask on AWS in under 3 minutes.">
+<meta name=keywords content=",AWS,Python,Flask,Zappa">
+<meta name=robots content="noodp">
+<meta name=theme-color content="#d58432">
+<link rel=canonical href=https://vonsopanen.github.io/posts/deploying-a-serverless-microservice-with-flask-zappa/>
+<title>
+Deploying a serverless microservice with Flask & Zappa
+</title>
+<link href=https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.2.1/css/flag-icon.min.css rel=stylesheet type=text/css>
+<link rel=stylesheet href=https://vonsopanen.github.io/main.491d9de14a60a99da243398aa5873cb28a058c58cb30eb698c56e003d11d6aab.css>
+<meta itemprop=name content="Deploying a serverless microservice with Flask & Zappa">
+<meta itemprop=description content="In this blog we will take a look at Zappa and deploy a serverless microservice using Flask on AWS in under 3 minutes."><meta itemprop=datePublished content="2020-09-12T10:15:46+02:00">
+<meta itemprop=dateModified content="2020-09-12T10:15:46+02:00">
+<meta itemprop=wordCount content="1465"><meta itemprop=image content="https://vonsopanen.github.io/images/blog/2/header.png">
+<meta itemprop=keywords content="AWS,Python,Flask,Zappa,">
+<meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://vonsopanen.github.io/images/blog/2/header.png">
+<meta name=twitter:title content="Deploying a serverless microservice with Flask & Zappa">
+<meta name=twitter:description content="In this blog we will take a look at Zappa and deploy a serverless microservice using Flask on AWS in under 3 minutes.">
+<meta property="article:published_time" content="2020-09-12 10:15:46 +0200 +0200">
+</head>
+<body class=dark-theme>
+<div class=container>
+<header class=header>
+<span class=header__inner>
+<a href=https://vonsopanen.github.io/ style=text-decoration:none>
+<div class=logo>
+<span class=logo__mark>></span>
+<span class=logo__text>$ cd /home/</span>
+<span class=logo__cursor>
+</span>
+</div>
+</a>
+<span class=header__right>
+<nav class=menu>
+<ul class=menu__inner><li><a href=https://vonsopanen.github.io/about/>About</a></li><li><a href=https://vonsopanen.github.io/posts/>Posts</a></li>
+</ul>
+</nav>
+<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+</span>
+<span class="theme-toggle unselectable"><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg>
+</span>
+</span>
+</span>
+</header>
+<div class=content>
+<main class=post>
+<div class=post-info>
+<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+7 minutes
+</p>
+</div>
+<article>
+<h1 class=post-title>
+<a href=https://vonsopanen.github.io/posts/deploying-a-serverless-microservice-with-flask-zappa/>Deploying a serverless microservice with Flask & Zappa</a>
+</h1>
+<div class=post-content>
+<h2 id=intro->Intro 👇</h2>
+<p>In this blog post we are going to take a look at an awesome deployment tool called Zappa. We will deploy a <strong>serverless microservice</strong> using Flask on AWS in under 3 minutes. Exciting.</p>
+<p>Our little microservice will be an API endpoint that returns a dataset of a random person in the form of a JSON response. You can view the <a href=https://github.com/rafrasenberg/flask-zappa-serverless>source code here</a>. Let&rsquo;s start!</p>
+<h4 id=prerequisites>Prerequisites:</h4>
+<ul>
+<li>You need an AWS account</li>
+<li>AWS CLI set-up on your development machine</li>
+<li>Virtualenv installed</li>
+</ul>
+<h2 id=what-is-zappa->What is Zappa? 🔍</h2>
+<p>Zappa is a tool that makes it very easy to build and deploy server-less, event-driven Python applications on AWS Lambda + API Gateway.</p>
+<p>Think of it as &ldquo;serverless&rdquo; web hosting for your Python apps. That means infinite scaling, zero downtime, zero maintenance - and at a fraction of the cost of your current deployments.</p>
+<h2 id=setting-up-the-project->Setting up the project ✅</h2>
+<p>The first thing we need to do is creating a virtual environment where we install Flask and Zappa. To keep things organised I like to add my <code>src</code> folder that contains the app files inside the virtualenv folder.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#960050;background-color:#1e0010>$</span> virtualenv <span style=color:#f92672>-</span>p python3 persongenerator
+<span style=color:#960050;background-color:#1e0010>$</span> cd persongenerator <span style=color:#f92672>&amp;&amp;</span> source bin<span style=color:#f92672>/</span>activate
+<span style=color:#960050;background-color:#1e0010>$</span> mkdir src <span style=color:#f92672>&amp;&amp;</span> cd src
+<span style=color:#960050;background-color:#1e0010>$</span> pip install flask zappa
+</code></pre></div><p>After you have ran the commands above, create a new file called <code>app.py</code> and add the code snippet down below. The Flask code is fairly straight-forward, we create a Flask object and attach a route decorator function to it which defines our path. Which is in this case &ldquo;/&rdquo; and thus the homepage.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> flask <span style=color:#f92672>import</span> Flask
+app <span style=color:#f92672>=</span> Flask(__name__)
+
+<span style=color:#a6e22e>@app</span><span style=color:#f92672>.</span>route(<span style=color:#e6db74>&#39;/&#39;</span>)
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>index</span>():
+    <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;Hello, world!&#34;</span>, <span style=color:#ae81ff>200</span>
+
+<span style=color:#75715e># This is for local development</span>
+<span style=color:#66d9ef>if</span> __name__ <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;__main__&#39;</span>:
+    app<span style=color:#f92672>.</span>run()
+</code></pre></div><p>You can confirm that your hello world app is working by running <code>flask run</code> and visiting your browser at <code>localhost:5000</code></p>
+<p>Alright neat, it&rsquo;s working. Time to deploy!</p>
+<h2 id=ready-set-deploy->Ready, set.. DEPLOY! 🚀</h2>
+<p>First make sure that you have created an AWS S3 bucket for this app. You can do so by going to the AWS console and then in the top menu following the link <em><strong>Services</strong></em>. Then under the heading <em><strong>Storage</strong></em> click on the link <em><strong>S3</strong></em>.</p>
+<p>Click the <em><strong>Create bucket</strong></em> button and add a bucket.</p>
+<p><strong>Note:</strong> This bucket will NOT contain website files, as this is not a static website. So the bucket does not need to be public. I will explain why we need this bucket later in the post.</p>
+<p>Create a new file in your project root called <code>zappa_settings.json</code>. This is basically what will hold our Zappa configuration.</p>
+<pre tabindex=0><code>{
+    &quot;dev&quot;: {
+        &quot;s3_bucket&quot;: &quot;your_s3_bucket&quot;,
+        &quot;app_function&quot;: &quot;app.app&quot;
+    }
+}
+</code></pre><p>This defines an environment called &lsquo;dev&rsquo; (later, you may want to add &lsquo;staging&rsquo; and &lsquo;production&rsquo; environments as well). It also defines the name of the S3 bucket we will be deploying to. And at last it points Zappa to a WSGI-compatible function, in this case, our Flask app object.</p>
+<p>And now we are ready to deploy! <strong>Wait a minute.. WHAAAATTTT?!</strong> 😱</p>
+<p>Yup, not joking. Run the following command:</p>
+<pre tabindex=0><code>$ zappa deploy dev
+</code></pre><p>And our microservice is alive. You will see in your command line prompt which URL endpoint. That is quick! 🔥🔥</p>
+<p>Alright.. slow down there. What is actually going on behind the scenes when we run the command <code>zappa deploy dev</code>?</p>
+<h4 id=zappa-will>Zappa will:</h4>
+<ol>
+<li>Automatically package up your application and local virtual environment into a Lambda-compatible archive and replace any dependencies with versions precompiled for Lambda</li>
+<li>Then it will set up the function handler and necessary WSGI Middleware</li>
+<li>Upload the archive to S3</li>
+<li>Create and manage the necessary Amazon IAM policies and roles and register it as a new Lambda function</li>
+<li>Create a new API Gateway resource, create WSGI-compatible routes for it and link it to the new Lambda function</li>
+<li>And at last, delete the archive from your S3 bucket. Handy!</li>
+</ol>
+<p>Now you know why we need that S3 bucket. It is only used as a temporary tool for the deployment as there are no files in there.</p>
+<p>Let&rsquo;s expand our &ldquo;Hello World&rdquo; microservice and create a random person generator in the next part.</p>
+<h2 id=creating-a-random-person-generator->Creating a random person generator 👥</h2>
+<p>First, create a file in your project root called <code>functions.py</code>. Here we will add the logic for our app, instead of stuffing it into the Flask view.</p>
+<p>I fired up Google and searched for a list of popular first and last names. These I added in two text files called <code>first_name.txt</code> and <code>last_name.txt</code>. You can find these text files in the <a href=https://github.com/rafrasenberg/flask-zappa-serverless>Github repo</a>!</p>
+<p>So we need a little function that runs and selects one random name out of one of those text files (since we want a random first name & last name). Let&rsquo;s write the code.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> random
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>random_line</span>(filename):
+    <span style=color:#66d9ef>with</span> open(filename) <span style=color:#66d9ef>as</span> f:
+        lines <span style=color:#f92672>=</span> f<span style=color:#f92672>.</span>readlines()
+        <span style=color:#66d9ef>return</span> random<span style=color:#f92672>.</span>choice(lines)<span style=color:#f92672>.</span>strip()
+</code></pre></div><p>The function takes the filename as an argument so that we can re-use it for both the first name and last name text file. So we open the file, pick a random line and return it. I called <code>.strip()</code> on it as well to make sure there are no blank spaces after the name.</p>
+<p>Alright cool, so we have a way to get a random first and last name. Now a random address to complete our dataset! I found a JSON file online which contained 300 random addresses. It was in the following format:</p>
+<pre tabindex=0><code>{
+    &quot;addresses&quot;: [
+        {
+            &quot;address1&quot;: &quot;1745 T Street Southeast&quot;,
+            &quot;address2&quot;: &quot;&quot;,
+            &quot;city&quot;: &quot;Washington&quot;,
+            &quot;state&quot;: &quot;DC&quot;,
+            &quot;postalCode&quot;: &quot;20020&quot;,
+            &quot;coordinates&quot;: {
+                &quot;lat&quot;: 38.867033,
+                &quot;lng&quot;: -76.979235
+            }
+        },
+        {
+            &quot;address1&quot;: &quot;6007 Applegate Lane&quot;,
+            &quot;address2&quot;: &quot;&quot;,
+            &quot;city&quot;: &quot;Louisville&quot;,
+            &quot;state&quot;: &quot;KY&quot;,
+            &quot;postalCode&quot;: &quot;40219&quot;,
+            &quot;coordinates&quot;: {
+                &quot;lat&quot;: 38.1343013,
+                &quot;lng&quot;: -85.6498512
+            }
+        }
+        ......
+    ]
+}
+</code></pre><p>So we need to write another function that takes a random address from this array and then afterwards we need a final function that joins these two together.</p>
+<p>This code is quite easy so we could technically also write all of this in one function or even directly into the Flask view. However I like to seperate my code into small bits which makes everything re-usable and way more error prone. I stick to that principle no matter the size of the app.</p>
+<p>Alright, so we need to open the JSON file in our Python function and then return one random address. We can use the following code for that:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> random
+<span style=color:#f92672>import</span> json
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>random_address</span>(filename):
+    <span style=color:#66d9ef>with</span> open(filename) <span style=color:#66d9ef>as</span> f:
+        data <span style=color:#f92672>=</span> json<span style=color:#f92672>.</span>load(f)
+        random_address <span style=color:#f92672>=</span> random<span style=color:#f92672>.</span>choice(data[<span style=color:#e6db74>&#39;addresses&#39;</span>])
+        <span style=color:#66d9ef>return</span> random_address
+</code></pre></div><p>Looks fairly similar to our previous function right? So we open the JSON file and then call <code>json.load</code> which will turn our JSON into a Python dictionary. In order to call <code>random.choice</code> we need to have a list. So we use <code>data['addresses']</code> to get our desired format and finally, we return our random address!</p>
+<p>Let&rsquo;s continue with the last function, which will join these two together into one random dataset.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> random
+<span style=color:#f92672>import</span> json
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>get_random_person</span>():
+    data <span style=color:#f92672>=</span> random_address(<span style=color:#e6db74>&#39;address.json&#39;</span>)
+    data[<span style=color:#e6db74>&#39;firstName&#39;</span>] <span style=color:#f92672>=</span> random_line(<span style=color:#e6db74>&#39;first_name.txt&#39;</span>)
+    data[<span style=color:#e6db74>&#39;lastName&#39;</span>] <span style=color:#f92672>=</span> random_line(<span style=color:#e6db74>&#39;last_name.txt&#39;</span>)
+    <span style=color:#66d9ef>return</span> data
+</code></pre></div><p>Here we first get a random address and save this into the variable <code>data</code>. This variable contains our dictionary. We then use a new key as a subscript and assign its value with our <code>random_line()</code> function and thus a random name. Then at last, we return the data.</p>
+<p>The full <code>functions.py</code> file will look like this:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> random
+<span style=color:#f92672>import</span> json
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>random_line</span>(filename):
+    <span style=color:#66d9ef>with</span> open(filename) <span style=color:#66d9ef>as</span> f:
+        lines <span style=color:#f92672>=</span> f<span style=color:#f92672>.</span>readlines()
+        <span style=color:#66d9ef>return</span> random<span style=color:#f92672>.</span>choice(lines)<span style=color:#f92672>.</span>strip()
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>random_address</span>():
+    <span style=color:#66d9ef>with</span> open(<span style=color:#e6db74>&#39;address.json&#39;</span>) <span style=color:#66d9ef>as</span> f:
+        data <span style=color:#f92672>=</span> json<span style=color:#f92672>.</span>load(f)
+        random_address <span style=color:#f92672>=</span> random<span style=color:#f92672>.</span>choice(data[<span style=color:#e6db74>&#39;addresses&#39;</span>])
+        <span style=color:#66d9ef>return</span> random_address
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>get_random_person</span>():
+    data <span style=color:#f92672>=</span> random_address() 
+    data[<span style=color:#e6db74>&#39;firstName&#39;</span>] <span style=color:#f92672>=</span> random_line(<span style=color:#e6db74>&#39;first_name.txt&#39;</span>)
+    data[<span style=color:#e6db74>&#39;lastName&#39;</span>] <span style=color:#f92672>=</span> random_line(<span style=color:#e6db74>&#39;last_name.txt&#39;</span>)
+    <span style=color:#66d9ef>return</span> data
+</code></pre></div><p>Now all that is left is updating our <code>app.py</code> file. So here we import the function we made and add an extra Flask endpoint to our microservice. We use the built-in <code>jsonify</code> from Flask to turn our Python dictionary into valid JSON.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> flask <span style=color:#f92672>import</span> Flask
+<span style=color:#f92672>from</span> flask <span style=color:#f92672>import</span> jsonify
+<span style=color:#f92672>from</span> functions <span style=color:#f92672>import</span> get_full_person
+app <span style=color:#f92672>=</span> Flask(__name__)
+
+<span style=color:#a6e22e>@app</span><span style=color:#f92672>.</span>route(<span style=color:#e6db74>&#39;/&#39;</span>)
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>index</span>():
+    <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;Hello, world!&#34;</span>, <span style=color:#ae81ff>200</span>
+
+<span style=color:#a6e22e>@app</span><span style=color:#f92672>.</span>route(<span style=color:#e6db74>&#39;/random-person&#39;</span>)
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>get_person</span>():
+    data <span style=color:#f92672>=</span> get_full_person()
+    <span style=color:#66d9ef>return</span> jsonify(data)
+
+<span style=color:#75715e># This is for local development</span>
+<span style=color:#66d9ef>if</span> __name__ <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;__main__&#39;</span>:
+    app<span style=color:#f92672>.</span>run()
+</code></pre></div><p>Now all that is left is updating our serverless Lambda function with the Zappa update command down below. It will automatically update all the code for us and your new random person endpoint will be available at <em>dev/random-person</em>.</p>
+<pre tabindex=0><code>$ zappa update dev
+</code></pre><p>Let&rsquo;s test it quick with <code>curl</code>:</p>
+<pre tabindex=0><code>$ curl 'https://xdsk3y7413.execute-api.eu-central-1.amazonaws.com/dev/random-person'
+</code></pre><p>The response:</p>
+<pre tabindex=0><code>{
+   &quot;address1&quot;:&quot;8502 Madrone Avenue&quot;,
+   &quot;address2&quot;:&quot;&quot;,
+   &quot;city&quot;:&quot;Louisville&quot;,
+   &quot;coordinates&quot;:{
+      &quot;lat&quot;:38.1286407,
+      &quot;lng&quot;:-85.8678042
+   },
+   &quot;firstName&quot;:&quot;Jennifer&quot;,
+   &quot;lastName&quot;:&quot;Jenkins&quot;,
+   &quot;postalCode&quot;:&quot;40258&quot;,
+   &quot;state&quot;:&quot;KY&quot;
+}
+</code></pre><p>Working like a charm! 😄</p>
+<h2 id=conclusion->Conclusion ⚡</h2>
+<p>Alright, now you see how easy it is to deploy serverless microservices with Flask and Zappa!</p>
+<p>In my previous blog post we also explored Lambda functions but a deployment tool like Zappa makes it 100x times easier. Next up is adding a custom domain to our microservice, which will be covered in a different post.</p>
+<p>See you next time! 👋</p>
+</div>
+</article>
+<hr>
+<div class=post-info>
+<p>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83.0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7" y2="7"/></svg><span class=tag><a href=https://vonsopanen.github.io/tags/aws/>AWS</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/python/>Python</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/flask/>Flask</a></span><span class=tag><a href=https://vonsopanen.github.io/tags/zappa/>Zappa</a></span>
+</p>
+<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+1465 Words
+</p>
+<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+2020-09-12 08:15 +0000
+</p>
+</div>
+<div class=pagination>
+<div class=pagination__title>
+<span class=pagination__title-h></span>
+<hr>
+</div>
+<div class=pagination__buttons>
+<span class="button previous">
+<a href=https://vonsopanen.github.io/posts/ubuntu-20.04-basic-server-set-up-beginner-tutorial/>
+<span class=button__icon>←</span>
+<span class=button__text>Ubuntu 20.04 basic server set-up (beginner tutorial)</span>
+</a>
+</span>
+<span class="button next">
+<a href=https://vonsopanen.github.io/posts/aws-lambda-function-to-retrieve-twitter-follower-count/>
+<span class=button__text>AWS Lambda function to retrieve Twitter follower count</span>
+<span class=button__icon>→</span>
+</a>
+</span>
+</div>
+</div>
+<div id=comments>
+<div id=disqus_thread></div>
+<script type=application/javascript>var disqus_config=function(){};(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('disqus_thread').innerHTML='Disqus comments not available by default when the website is previewed locally.';return}var b=document,a=b.createElement('script');a.async=!0,a.src='//rafrasenberg-com.disqus.com/embed.js',a.setAttribute('data-timestamp',+new Date),(b.head||b.body).appendChild(a)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+<a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a>
+</div>
+</main>
+</div>
+<footer class=footer>
+<div class=footer__inner>
+<div class=footer__content>
+<span>© 2020</span>
+<a href=https://vonsopanen.github.io/><span>Raf Rasenberg</span></a>
+</div>
+</div>
+</footer>
+</div>
+<script type=text/javascript src=https://vonsopanen.github.io/bundle.min.a0f363fdf81cdc5cfacc447a79c33189eb000d090336cd04aac8ee256f423b3133b836c281944c19c75e38d0b0b449f01ce5807e37798b7ac94ac1db51983fc4.js integrity="sha512-oPNj/fgc3Fz6zER6ecMxiesADQkDNs0EqsjuJW9COzEzuDbCgZRMGcdeONCwtEnwHOWAfjd5i3rJSsHbUZg/xA=="></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-177931139-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-177931139-1')</script>
+<script>(function(c,e,f,h,b,d){c.MailerLiteObject=b;function a(){var b={a:arguments,q:[]},c=this.push(b);return"number"!=typeof c?c:a.bind(b.q)}a.q=a.q||[],c[b]=c[b]||a.bind(a.q),c[b].q=c[b].q||a.q,d=e.createElement(f);var g=e.getElementsByTagName(f)[0];d.async=1,d.src=h+'?v'+~~((new Date).getTime()/1e6),g.parentNode.insertBefore(d,g)})(window,document,'script','https://static.mailerlite.com/js/universal.js','ml');var ml_account=ml('accounts','2387594','n2l1g5f0i1','load')</script>
+</body>
+</html>
